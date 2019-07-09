@@ -160,7 +160,6 @@ int _output(SimStruct *S) {
 int _update(SimStruct *S) {
     auto &pm = BlockPersistenceRegistry::getRegistry(S);
     DEBUG_ASSERT(pm.block, "The block is not created when updating!");
-    pm.block->onUpdate();
 //    ssPrintf("Port %d: %lf\n", 0,     *ssGetInputPortRealSignalPtrs(S, 0)[0]);
 //    ssPrintf("Port %d: %lf\n", 1,     *ssGetInputPortRealSignalPtrs(S, 1)[0]);
 
@@ -189,5 +188,7 @@ int _update(SimStruct *S) {
             }
         }
     }
-    return 0;
+  pm.block->onUpdate();
+
+  return 0;
 }
