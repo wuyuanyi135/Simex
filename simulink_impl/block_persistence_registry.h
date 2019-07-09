@@ -12,7 +12,7 @@
 #include "simstruc.h"
 class PersistenceMap {
 public:
-    Block* block {nullptr};
+    std::shared_ptr<Block> block {nullptr};
 };
 
 typedef std::unordered_map<void*, std::unique_ptr<PersistenceMap>> PersistenceMapType;
@@ -21,5 +21,6 @@ public:
     static PersistenceMapType blockPersistenceRegistryMap;
     static void unregister(SimStruct* S);
     static PersistenceMap& getOrCreateRegistry(SimStruct* S);
+    static PersistenceMap& getRegistry(SimStruct* S);
 };
 #endif //SIMEX_BLOCK_PERSISTENCE_REGISTRY_H

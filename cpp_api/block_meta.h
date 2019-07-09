@@ -9,6 +9,7 @@
 #include "port.h"
 #include "dialog_parameter.h"
 #include "sample_time.h"
+#include "simstruc.h"
 
 class BlockMeta {
 public:
@@ -26,7 +27,12 @@ public:
 
     std::vector<SampleTime> sampleTime;
 
-    BlockMeta();
+    void registerInputPort(int dataTypeId, int dimension, int complexity, int acceptFrameData, int directFeedthrough);
+    void registerInputPort(int dataTypeId, int dimension1, int dimension2, int complexity, int acceptFrameData, int directFeedthrough);
+    void registerOutputPort(int dataTypeId, int dimension, int complexity, int acceptFrameData);
+    void registerOutputPort(int dataTypeId, int dimension1, int dimension2, int complexity, int acceptFrameData);
+
+    BlockMeta(SimStruct& S);
     ~BlockMeta();
 };
 #endif //SIMEX_BLOCK_META_H

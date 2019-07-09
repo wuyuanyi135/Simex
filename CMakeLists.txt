@@ -12,7 +12,6 @@ add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 
 
 # options
-add_compile_definitions(USE_INTERNAL_BLOCK_LIFECYCLE)
 
 file(GLOB SIMULINK_IMPL_SOURCES simulink_impl/*.c simulink_impl/*.cpp)
 file(GLOB CPP_API_SOURCES cpp_api/*.c cpp_api/*.cpp)

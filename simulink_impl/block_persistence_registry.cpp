@@ -38,4 +38,13 @@ PersistenceMap &BlockPersistenceRegistry::getOrCreateRegistry(SimStruct* S) {
         return *(it->second);
     }
 }
+
+PersistenceMap &BlockPersistenceRegistry::getRegistry(SimStruct *S) {
+    auto it = BlockPersistenceRegistry::blockPersistenceRegistryMap.find(S->blkInfo.block);
+    if (it == BlockPersistenceRegistry::blockPersistenceRegistryMap.end()) {
+        // not found, error
+        throw std::exception("Block not found");
+    }
+    return *(it->second);
+}
 // TODO: how to remove ununsed blockMeta? maybe not save it at all!

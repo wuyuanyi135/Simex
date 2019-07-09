@@ -10,9 +10,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    int _initializeMeta(SimStruct* S);
-    int _initialize (SimStruct* S);
+    int _initializeMeta(SimStruct* S) ;
+    int _initializeSampleTime(SimStruct* S);
+    int _start(SimStruct* S);
     int _terminate (SimStruct* S);
+    int _output(SimStruct* S);
+    int _update(SimStruct* S);
 
 #ifdef __cplusplus
 }
