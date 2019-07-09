@@ -4,7 +4,7 @@
 #include "block_exceptions.h"
 
 
-const char *KeyError::what() const {
+const char *KeyError::what() const noexcept {
     std::stringstream ss;
     ss << "key error: " <<blockPointer;
     return ss.str().c_str();

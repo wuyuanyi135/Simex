@@ -4,6 +4,7 @@
 
 #include <exception>
 #include <string>
+#include <stdexcept>
 #include "datatype_size.h"
 
 int dataTypeIdToByteSize(int dataTypeId) {
@@ -37,6 +38,6 @@ int dataTypeIdToByteSize(int dataTypeId) {
 
         default:
             std::string s = "Unknown datatype id: " + std::to_string(dataTypeId);
-            throw std::exception(s.c_str());
+            throw std::invalid_argument(s.c_str());
     }
 }

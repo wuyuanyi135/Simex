@@ -13,7 +13,7 @@ public:
 
     KeyError(void *blockPointer);
 
-    const char *what() const override;
+    const char *what() const noexcept override ;
 };
 
 

@@ -7,13 +7,13 @@
 
 #include "simstruc.h"
 #ifdef DEBUG
-#define DEBUG_PRINTF(fmt, ...) ssPrintf(fmt, __VA_ARGS__)
+#define DEBUG_PRINTF(fmt, ...) ssPrintf(fmt, ##__VA_ARGS__)
 #else
 #define DEBUG_PRINTF(fmt, ...)
 #endif
 
 #if defined(DEBUG) && defined(DEBUG_VERBOSITY_LIFECYCLE)
-#define DEBUGV_LIFECYCLE_PRINTF(fmt, ...) ssPrintf(fmt, __VA_ARGS__)
+#define DEBUGV_LIFECYCLE_PRINTF(fmt, ...) ssPrintf(fmt, ##__VA_ARGS__)
 #else
 #define DEBUGV_LIFECYCLE_PRINTF(fmt, ...)
 #endif
@@ -27,7 +27,7 @@
 #if defined(DEBUG) && !defined(DISABLE_ASSERT)
 #define DEBUG_ASSERT(C, MSG) \
 if (!C) {\
-    throw std::exception(MSG); \
+    throw std::runtime_error(MSG); \
 }
 #else
 #define DEBUG_ASSERT(C, MSG)

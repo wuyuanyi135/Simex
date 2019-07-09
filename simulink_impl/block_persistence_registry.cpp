@@ -43,7 +43,7 @@ PersistenceMap &BlockPersistenceRegistry::getRegistry(SimStruct *S) {
     auto it = BlockPersistenceRegistry::blockPersistenceRegistryMap.find(S->blkInfo.block);
     if (it == BlockPersistenceRegistry::blockPersistenceRegistryMap.end()) {
         // not found, error
-        throw std::exception("Block not found");
+        throw std::invalid_argument("Block not found");
     }
     return *(it->second);
 }

@@ -179,7 +179,7 @@ int _update(SimStruct *S) {
             int_T sizePerElement = dataTypeIdToByteSize(ssGetInputPortDataType(S, ip->portId));
             int_T totalSize = sizePerElement * el;
             if (ip->length < totalSize) {
-                throw std::exception("Input port has insufficient buffer size");
+                throw std::length_error("Input port has insufficient buffer size");
             }
 
             DEBUG_ASSERT(ip->data, "Input port has invalid data pointer");

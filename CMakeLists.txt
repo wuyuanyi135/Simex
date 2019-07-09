@@ -23,6 +23,7 @@ if (${ENABLE_TEST})
 
     foreach (TEST_DIR in ${TEST_DIRS})
         if (IS_DIRECTORY  ${TEST_DIR})
+            message(Adding test: ${TEST_DIR})
             add_subdirectory(${TEST_DIR})
 
         endif ()
