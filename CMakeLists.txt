@@ -9,7 +9,7 @@ include_directories(${Simulink_DIR}/include)
 include_directories(.)
 
 add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-
+add_compile_definitions(S_FUNCTION_LEVEL=2)
 
 # options
 

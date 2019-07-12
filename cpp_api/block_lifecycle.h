@@ -7,9 +7,7 @@
 
 #include <memory>
 #include "block.h"
-#include "block_meta.h"
 #include "simstruc.h"
-std::shared_ptr<Block> createBlock(SimStruct* S);
-std::shared_ptr<BlockMeta> createBlockMeta(SimStruct* S);
+std::shared_ptr<Block> createBlock(SimStruct *S);
 
 #endif //SIMEX_BLOCK_CREATION_H
