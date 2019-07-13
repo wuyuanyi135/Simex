@@ -31,12 +31,13 @@ class SimpleExampleBlock : public Block {
   }
 
   void onUpdate() override {
-      // Expansion:         (* (real64_T*) (outputPorts[0]->data)) = *(real64_T *) inputPorts[0]->data + *(real64_T *) inputPorts[1]->data;
-      OUTPUTPORT_TARGET(outputPorts[0], real64_T*) =
-          INPUTPORT_TARGET(inputPorts[0], real64_T*) + INPUTPORT_TARGET(inputPorts[1], real64_T*);
+
   }
 
   void onOutput() override {
+      // Expansion:         (* (real64_T*) (outputPorts[0]->data)) = *(real64_T *) inputPorts[0]->data + *(real64_T *) inputPorts[1]->data;
+      OUTPUTPORT_TARGET(outputPorts[0], real64_T*) =
+          INPUTPORT_TARGET(inputPorts[0], real64_T*) + INPUTPORT_TARGET(inputPorts[1], real64_T*);
   }
 };
 
