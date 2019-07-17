@@ -54,7 +54,7 @@ class Block {
   }
 
   explicit Block(SimStruct &S);
-  ~Block();
+  virtual ~Block();
 
 
  public:
