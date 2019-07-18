@@ -5,8 +5,10 @@ add_compile_definitions(DEBUG)
 #add_compile_definitions(DEBUG_SIMULINK_CALLBACK)
 
 set(CMAKE_BUILD_TYPE Debug)
+include_directories(${SIMEX_INCLUDES})
+
 matlab_add_mex(
         NAME MatrixIOExample
-        SRC ${SIMULINK_IMPL_SOURCES} ${CPP_API_SOURCES} ${TEST_SOURCES}
+        SRC ${SIMEX_SOURCES} ${TEST_SOURCES}
         LINK_TO ${Matlab_MEX_LIBRARY}
 )
