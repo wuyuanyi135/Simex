@@ -15,10 +15,10 @@
 class Block {
  public:
   // Whether it has been started and the runtime object is created;
-  bool isStarted {false};
+  bool isStarted{false};
 
  public:
-  SimStruct* simStructReference;
+  SimStruct *simStructReference;
 
  public:
   std::vector<InputPort> inputPorts;
@@ -48,7 +48,7 @@ class Block {
                                       int directFeedthrough);
   void registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData);
 
-  template <typename T>
+  template<typename T>
   void registerBlockParameter(bool tunable) {
       this->dialogParameters.push_back(std::make_shared<DialogParameter<T>>(this->dialogParameters.size(), tunable));
   }
@@ -56,15 +56,14 @@ class Block {
   explicit Block(SimStruct &S);
   virtual ~Block();
 
-
  public:
   // Called before on start. Create memory for the port, etc.
   virtual void onInitializeRuntime();
-  virtual void onStart() = 0;
-  virtual void onTerminate() = 0;
-  virtual void onUpdate() = 0;
-  virtual void onOutput() = 0;
+  virtual void onStart() { isStarted = true; };
+  virtual void onTerminate() { isStarted = false; };
+  virtual void onUpdate() {};
+  virtual void onOutput() {};
+  virtual void onParameterUpdated() {}
 };
-
 
 #endif //SIMEX_BLOCK_H

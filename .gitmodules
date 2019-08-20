@@ -1,0 +1,3 @@
+[submodule "cpp_api/ipc/msgpack-c"]
+	path = cpp_api/ipc/msgpack-c
+	url = https://github.com/msgpack/msgpack-c

@@ -20,7 +20,7 @@ void Block::registerInputPort(int dataTypeId,
                               int acceptFrameData,
                               int directFeedthrough) {
     int id = inputPorts.size();
-    InputPort ip = InputPort(id, this);
+    InputPort ip = InputPort(id, this, dataTypeId);
     for (int i = 0; i < numDimension; ++i) {
         ip.dimension.push_back(dimensions[i]);
     }
@@ -36,7 +36,7 @@ void Block::registerOutputPort(int dataTypeId,
                                int complexity,
                                int acceptFrameData) {
     int id = outputPorts.size();
-    OutputPort op = OutputPort(id, this);
+    OutputPort op = OutputPort(id, this, dataTypeId);
     for (int i = 0; i < numDimension; ++i) {
         op.dimension.push_back(dimensions[i]);
     }
@@ -51,7 +51,7 @@ void Block::registerVariableSizedInputPort(int dataTypeId,
                                            int acceptFrameData,
                                            int directFeedthrough) {
     int id = inputPorts.size();
-    InputPort ip = InputPort(id, this);
+    InputPort ip = InputPort(id, this, dataTypeId);
 
     ip.dynamicDimension = true;
     ip.dataTypeId = dataTypeId;
@@ -62,7 +62,7 @@ void Block::registerVariableSizedInputPort(int dataTypeId,
 }
 void Block::registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData) {
     int id = outputPorts.size();
-    OutputPort op = OutputPort(id, this);
+    OutputPort op = OutputPort(id, this, dataTypeId);
     op.dynamicDimension = true;
     op.dataTypeId = dataTypeId;
     op.complexity = complexity;

@@ -6,6 +6,7 @@
 #define SIMEX_PORT_H
 
 #include <vector>
+#include <simulink_impl/debug_utils.h>
 #include "simstruc.h"
 #include "sample_time.h"
 #include "dynamic_data.h"
@@ -32,12 +33,12 @@ class Block;
 
 class Port {
  public:
-  Port(int portId, Block *blockRef);
-  int complexity {COMPLEX_NO};
-  int dataTypeId {SS_DOUBLE};
+  Port(int portId, Block *blockRef, int dataTypeId) : portId(portId), _blockRef(blockRef), dataTypeId(dataTypeId) {}
+  int complexity{COMPLEX_NO};
+  int dataTypeId{SS_DOUBLE};
   bool dynamicDimension{false};
   SampleTime sampleTime{};
-  int acceptFrameData {FRAME_NO};
+  int acceptFrameData{FRAME_NO};
   std::vector<int> dimension;
 
   int portId;
@@ -52,8 +53,11 @@ class Port {
 
  public:
   // callbacks
-  bool validateDimension();
-  bool validateDataType();
+  bool validateDimension() { return true; };
+  bool validateDataType() { return true; };
+
+ public:
+
 };
 
 class InputPort : public Port {
@@ -66,19 +70,26 @@ class InputPort : public Port {
   /// this one should be used.
   bool autoCopyFromSimulink{true};
   bool requestingUpdateFromSimulink{false};
-  InputPort(int portId, Block *blockRef);
-  virtual ~InputPort();
+  InputPort(int portId, Block *blockRef, int dataTypeId) : Port(portId, blockRef, dataTypeId) {
+      DEBUGV_LIFECYCLE_PRINTF("RuntimeInputPort: %d is created\n",
+                              portId);
+  }
+  virtual ~InputPort() { DEBUGV_LIFECYCLE_PRINTF("RuntimeInputPort: %d is released\n", portId); }
 };
 
 class OutputPort : public Port {
  public:
-  OutputPort(int portId, Block *blockRef);
+  OutputPort(int portId, Block *blockRef, int dataTypeId) : Port(portId, blockRef, dataTypeId) {
+      DEBUGV_LIFECYCLE_PRINTF("RuntimeOutputPort: %d is created\n", portId);
+  };
   /// autoCopyToSimulink == true: copy data to Simulink when data is different.
   /// autoCopyToSimulink == false: copy data to Simulink only when requestingUpdateToSimulink is set. When dealing with large output
   /// this one should be used.
   bool autoCopyToSimulink{true};
   bool requestingUpdateToSimulink{false};
-  virtual ~OutputPort();
+  virtual ~OutputPort() {
+      DEBUGV_LIFECYCLE_PRINTF("RuntimeOutputPort: %d is released\n", portId);
+  };
 };
 
 #endif //SIMEX_PORT_H
