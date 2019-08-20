@@ -19,6 +19,7 @@ set(
         SIMEX_INCLUDES
         ${CMAKE_CURRENT_LIST_DIR}/cpp_api
         ${CMAKE_CURRENT_LIST_DIR}/simulink_impl
+        ${CMAKE_CURRENT_LIST_DIR}/cpp_api/ipc/msgpack-c
 )
 set (
         SIMEX_SOURCES

@@ -7,7 +7,7 @@ add_compile_definitions(DEBUG)
 set(CMAKE_BUILD_TYPE Debug)
 
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
-
+include_directories(${Qt5Widgets_INCLUDE_DIRS})
 include_directories(${SIMEX_INCLUDES})
 
 matlab_add_mex(

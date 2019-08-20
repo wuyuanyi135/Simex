@@ -339,5 +339,7 @@ int _checkParameters(SimStruct *S) {
         if (!pm->block->dialogParameters[i]->onValidateParameter())
             throw std::invalid_argument("Parameter " + std::to_string(i) + " validation failed!");
     }
+
+    pm->block->onParameterUpdated();
     return 0;
 }
