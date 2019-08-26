@@ -10,5 +10,5 @@ include_directories(${SIMEX_INCLUDES})
 matlab_add_mex(
         NAME MatrixIOExample
         SRC ${SIMEX_SOURCES} ${TEST_SOURCES}
-        LINK_TO ${Matlab_MEX_LIBRARY}
+        LINK_TO ${Matlab_MEX_LIBRARY} ${SIMEX_LIBS}
 )

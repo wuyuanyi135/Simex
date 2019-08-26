@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.14)
 project(Simex)
 
 find_package(Matlab REQUIRED)
+# TODO: optionally build ipc
+set(Boost_USE_STATIC_LIBS   ON)
+find_package(Boost REQUIRED COMPONENTS system)
+
+
 set(Simulink_DIR ${Matlab_ROOT_DIR}/simulink)
 
 include_directories(${Matlab_INCLUDE_DIRS})
@@ -26,7 +31,10 @@ set (
         ${SIMULINK_IMPL_SOURCES}
         ${CPP_API_SOURCES}
 )
-
+set (
+        SIMEX_LIBS
+        ${Boost_LIBRARIES}
+)
 if (${ENABLE_TEST})
     file(GLOB TEST_DIRS LIST_DIRECTORIES true test/*)
 
@@ -34,7 +42,6 @@ if (${ENABLE_TEST})
         if (IS_DIRECTORY ${TEST_DIR})
             message(Adding test: ${TEST_DIR})
             add_subdirectory(${TEST_DIR})
-
         endif ()
     endforeach ()
 endif ()
