@@ -7,7 +7,8 @@
 
 #include <vector>
 #include <simulink_impl/debug_utils.h>
-#include "simstruc.h"
+#include "simulink_headers.h"
+
 #include "sample_time.h"
 #include "dynamic_data.h"
 #define BLOCK_REGISTER_INPUT_PORT(BLK, PORT_ID) BLK->inputPorts.push_back(std::make_shared<RuntimeInputPort>(*BLK, PORT_ID))

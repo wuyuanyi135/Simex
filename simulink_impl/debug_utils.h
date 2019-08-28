@@ -5,7 +5,6 @@
 #ifndef SIMEX_DEBUG_UTILS_H
 #define SIMEX_DEBUG_UTILS_H
 
-#include "simstruc.h"
 #ifdef DEBUG
 #define DEBUG_PRINTF(fmt, ...) ssPrintf(fmt, ##__VA_ARGS__)
 #else

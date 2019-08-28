@@ -4,13 +4,14 @@
 
 #ifndef SIMEX_BLOCK_H
 #define SIMEX_BLOCK_H
-
+#include <boost/asio/io_service.hpp>
 #include <vector>
 #include <memory>
 #include "port.h"
 #include "dialog_parameter.h"
 #include "sample_time.h"
-#include "simstruc.h"
+
+#include "simulink_headers.h"
 
 class Block {
  public:
@@ -35,18 +36,22 @@ class Block {
   bool allowSignalsWithMoreThan2D{false};
   std::vector<SampleTime> sampleTime;
 
-  void registerInputPort(int dataTypeId,
-                         int numDimension,
-                         int *dimensions,
-                         int complexity,
-                         int acceptFrameData,
-                         int directFeedthrough);
-  void registerOutputPort(int dataTypeId, int numDimension, int *dimensions, int complexity, int acceptFrameData);
-  void registerVariableSizedInputPort(int dataTypeId,
-                                      int complexity,
-                                      int acceptFrameData,
-                                      int directFeedthrough);
-  void registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData);
+  virtual void registerInputPort(int dataTypeId,
+                                 int numDimension,
+                                 int *dimensions,
+                                 int complexity,
+                                 int acceptFrameData,
+                                 int directFeedthrough);
+  virtual void registerOutputPort(int dataTypeId,
+                                  int numDimension,
+                                  int *dimensions,
+                                  int complexity,
+                                  int acceptFrameData);
+  virtual void registerVariableSizedInputPort(int dataTypeId,
+                                              int complexity,
+                                              int acceptFrameData,
+                                              int directFeedthrough);
+  virtual void registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData);
 
   template<typename T>
   void registerBlockParameter(bool tunable) {
@@ -60,10 +65,20 @@ class Block {
   // Called before on start. Create memory for the port, etc.
   virtual void onInitializeRuntime();
   virtual void onStart() { isStarted = true; };
-  virtual void onTerminate() { isStarted = false; };
-  virtual void onUpdate() {};
+  virtual void onTerminate() {
+      isStarted = false;
+      delegateService.stop();
+  };
+  virtual void onUpdate() {
+      delegateService.poll();
+  };
   virtual void onOutput() {};
   virtual void onParameterUpdated() {}
+
+ protected:
+  // used for invoke MATLAB/Simulink calls on the main thread. Do not use infinite loop here
+  boost::asio::io_service delegateService;
+  boost::asio::io_service::work work{delegateService};
 };
 
 #endif //SIMEX_BLOCK_H

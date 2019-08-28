@@ -6,7 +6,7 @@
 #define SIMEX_DIALOG_PARAMETER_H
 #include <limits>
 #include "string"
-#include "simstruc.h"
+#include "simulink_headers.h"
 class DialogParameterBase {
  public:
   int id;

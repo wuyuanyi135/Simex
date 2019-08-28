@@ -5,8 +5,8 @@
 #ifndef SIMEX_DYNAMIC_DATA_H
 #define SIMEX_DYNAMIC_DATA_H
 
-#include "simstruc.h"
-
+#include <tmwtypes.h>
+#include "simulink_headers.h"
 class DynamicData {
  public:
   void *data{nullptr};
