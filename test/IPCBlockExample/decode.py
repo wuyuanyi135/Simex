@@ -6,6 +6,7 @@ unpacker = msgpack.Unpacker()
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(('127.0.0.1', 9990))
+print("started")
 while True:
     ret = s.recv(1)
     if not ret:

@@ -1,4 +1,4 @@
-add_compile_definitions(S_FUNCTION_NAME=AsyncImageFrameDisplay)
+add_compile_definitions(S_FUNCTION_NAME=GrpcBlockExample)
 file(GLOB TEST_SOURCES *.cpp *.c)
 add_compile_definitions(DEBUG)
 #add_compile_definitions(DEBUG_VERBOSITY_LIFECYCLE)
@@ -6,15 +6,9 @@ add_compile_definitions(DEBUG)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
-include_directories(${Qt5Widgets_INCLUDE_DIRS})
 include_directories(${SIMEX_INCLUDES})
-
 matlab_add_mex(
-        NAME AsyncImageFrameDisplay
+        NAME GrpcBlockExample
         SRC ${SIMEX_SOURCES} ${TEST_SOURCES}
         LINK_TO ${Matlab_MEX_LIBRARY} ${SIMEX_LIBS}
 )
-
-add_executable(DisplayWindow Display.cpp)
-target_link_libraries(DisplayWindow Qt5::Core Qt5::Widgets)

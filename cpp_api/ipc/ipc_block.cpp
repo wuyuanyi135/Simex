@@ -118,7 +118,7 @@ void IPCBlock::broadcastMessage(std::string str) {
         auto &peer = clients[i];
         peer.async_send(
             buffer(*s),
-            [&, s](const boost::system::error_code &ec, std::size_t bytes_transferred) {
+            [&, s, i](const boost::system::error_code &ec, std::size_t bytes_transferred) {
               if (ec) {
                   clients[i].close();
                   clients.erase(clients.begin() + i);
