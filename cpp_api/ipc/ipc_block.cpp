@@ -80,7 +80,7 @@ void IPCBlock::NotifyStateChanged(BlockState state) {
     currentState = state;
     std::stringstream buf;
     StateMessage::makeStateNotifyPacket(buf, state);
-    broadcastMessage(buffer(buf.str()));
+    broadcastMessage(buf.str());
 }
 void IPCBlock::NotifyParameterChanged() {
     ParameterMessage msg;
@@ -89,7 +89,7 @@ void IPCBlock::NotifyParameterChanged() {
     }
     std::stringstream buf;
     msgpack::pack(buf, msg);
-    broadcastMessage(buffer(buf.str()));
+    broadcastMessage(buf.str());
 
 }
 void IPCBlock::NotifyPortUpdated() {
@@ -110,14 +110,15 @@ void IPCBlock::NotifyPortUpdated() {
 
     std::stringstream buf;
     msgpack::pack(buf, msg);
-    broadcastMessage(buffer(buf.str()));
+    broadcastMessage(buf.str());
 }
-void IPCBlock::broadcastMessage(const_buffer buf) {
+void IPCBlock::broadcastMessage(std::string str) {
+    std::shared_ptr<std::string> s = std::make_shared<std::string>(str);
     for (int i = 0; i < clients.size(); i++) {
         auto &peer = clients[i];
         peer.async_send(
-            buf,
-            [&](const boost::system::error_code &ec, std::size_t bytes_transferred) {
+            buffer(*s),
+            [&, s](const boost::system::error_code &ec, std::size_t bytes_transferred) {
               if (ec) {
                   clients[i].close();
                   clients.erase(clients.begin() + i);

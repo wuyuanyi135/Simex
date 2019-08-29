@@ -53,7 +53,7 @@ class IPCBlock : public Block {
  protected:
   // callback handler for new connection
   void acceptHandler(const boost::system::error_code& error, tcp::socket peer);
-  void broadcastMessage(const_buffer buf);
+  void broadcastMessage(std::string str);
 
  protected:
   // store the index of the input ports that ipc won't send.
