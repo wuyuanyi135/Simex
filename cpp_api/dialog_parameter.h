@@ -26,7 +26,7 @@ class DialogParameter {};
 template<>
 class DialogParameter<real64_T> : public DialogParameterBase {
  public:
-  DialogParameter(int id, bool tunable);
+  DialogParameter(int id, bool tunable): DialogParameterBase(id, tunable) {};
   bool onValidateParameter() override {
       return data > min && data < max;
   }

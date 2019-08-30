@@ -11,14 +11,13 @@
 
 #include "sample_time.h"
 #include "dynamic_data.h"
-#define BLOCK_REGISTER_INPUT_PORT(BLK, PORT_ID) BLK->inputPorts.push_back(std::make_shared<RuntimeInputPort>(*BLK, PORT_ID))
-#define BLOCK_REGISTER_OUTPUT_PORT(BLK, PORT_ID) BLK->outputPorts.push_back(std::make_shared<RuntimeOutputPort>(*BLK, PORT_ID))
+
 
 // Access the void* pointer of the output port
-#define OUTPUTPORT_POINTER(OUTPUTPORT) (OUTPUTPORT.portData.data)
+#define OUTPUTPORT_POINTER(OUTPUTPORT) (OUTPUTPORT->portData.data)
 
 // Access the void* pointer of the input port
-#define INPUTPORT_POINTER(INPUTPORT) (INPUTPORT.portData.data)
+#define INPUTPORT_POINTER(INPUTPORT) (INPUTPORT->portData.data)
 
 // Access the pointer with type cast short hand.
 #define OUTPUTPORT_TYPED_POINTER(OUTPUTPORT, T) ((T)OUTPUTPORT_POINTER(OUTPUTPORT))
@@ -72,16 +71,16 @@ class InputPort : public Port {
   bool autoCopyFromSimulink{true};
   bool requestingUpdateFromSimulink{false};
   InputPort(int portId, Block *blockRef, int dataTypeId) : Port(portId, blockRef, dataTypeId) {
-      DEBUGV_LIFECYCLE_PRINTF("RuntimeInputPort: %d is created\n",
+      DEBUGV_LIFECYCLE_PRINTF("InputPort: %d is created\n",
                               portId);
   }
-  virtual ~InputPort() { DEBUGV_LIFECYCLE_PRINTF("RuntimeInputPort: %d is released\n", portId); }
+  virtual ~InputPort() { DEBUGV_LIFECYCLE_PRINTF("InputPort: %d is released\n", portId); }
 };
 
 class OutputPort : public Port {
  public:
   OutputPort(int portId, Block *blockRef, int dataTypeId) : Port(portId, blockRef, dataTypeId) {
-      DEBUGV_LIFECYCLE_PRINTF("RuntimeOutputPort: %d is created\n", portId);
+      DEBUGV_LIFECYCLE_PRINTF("OutputPort: %d is created\n", portId);
   };
   /// autoCopyToSimulink == true: copy data to Simulink when data is different.
   /// autoCopyToSimulink == false: copy data to Simulink only when requestingUpdateToSimulink is set. When dealing with large output
@@ -89,7 +88,7 @@ class OutputPort : public Port {
   bool autoCopyToSimulink{true};
   bool requestingUpdateToSimulink{false};
   virtual ~OutputPort() {
-      DEBUGV_LIFECYCLE_PRINTF("RuntimeOutputPort: %d is released\n", portId);
+      DEBUGV_LIFECYCLE_PRINTF("OutputPort: %d is released\n", portId);
   };
 };
 
