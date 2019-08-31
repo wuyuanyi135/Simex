@@ -6,21 +6,31 @@
 #define SIMEX_DYNAMIC_DATA_H
 
 #include <tmwtypes.h>
+
+#include <memory>
 #include "simulink_headers.h"
+
 class DynamicData {
- public:
-  void *data{nullptr};
-  int size{0};
+public:
+    DynamicData() = default;
 
-  virtual ~DynamicData() { delete[] static_cast<uint8_T*>(data); }
+    DynamicData(const DynamicData& ref) {
+        // share the pointer. do not copy the underlying buffer.
+        size = ref.size;
+        data = ref.data;
+    }
+public:
+    std::shared_ptr<char[]> data{nullptr};
+    int size{0};
 
-  void reallocate(int sz) {
-      if (sz != size) {
-          delete[] static_cast<uint8_T*>(data);
-          data = new uint8_T[sz]();
-          size = sz;
-      }
-  }
+//    virtual ~DynamicData() { delete[] static_cast<uint8_T *>(data); }
+
+    void reallocate(int sz) {
+        if (sz != size) {
+            size = sz;
+            data.reset(new char[size]());
+        }
+    }
 };
 
 #endif //SIMEX_DYNAMIC_DATA_H

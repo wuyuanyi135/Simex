@@ -14,10 +14,10 @@
 
 
 // Access the void* pointer of the output port
-#define OUTPUTPORT_POINTER(OUTPUTPORT) (OUTPUTPORT->portData.data)
+#define OUTPUTPORT_POINTER(OUTPUTPORT) (OUTPUTPORT->portData.data.get())
 
 // Access the void* pointer of the input port
-#define INPUTPORT_POINTER(INPUTPORT) (INPUTPORT->portData.data)
+#define INPUTPORT_POINTER(INPUTPORT) (INPUTPORT->portData.data.get())
 
 // Access the pointer with type cast short hand.
 #define OUTPUTPORT_TYPED_POINTER(OUTPUTPORT, T) ((T)OUTPUTPORT_POINTER(OUTPUTPORT))
@@ -32,64 +32,75 @@
 class Block;
 
 class Port {
- public:
-  Port(int portId, Block *blockRef, int dataTypeId) : portId(portId), _blockRef(blockRef), dataTypeId(dataTypeId) {}
-  int complexity{COMPLEX_NO};
-  int dataTypeId{SS_DOUBLE};
-  bool dynamicDimension{false};
-  SampleTime sampleTime{};
-  int acceptFrameData{FRAME_NO};
-  std::vector<int> dimension;
+public:
+    Port(int portId, Block *blockRef, int dataTypeId) : portId(portId), _blockRef(blockRef), dataTypeId(dataTypeId) {}
 
-  int portId;
+    Port(const Port &ref) = default;
 
- protected:
-  // Only available during runtime:
-  Block *_blockRef{nullptr};
+    int complexity{COMPLEX_NO};
+    int dataTypeId{SS_DOUBLE};
+    bool dynamicDimension{false};
+    SampleTime sampleTime{};
+    int acceptFrameData{FRAME_NO};
+    std::vector<int> dimension;
 
- public:
-  // Only available during runtime:
-  DynamicData portData;
+    int portId;
 
- public:
-  // callbacks
-  bool validateDimension() { return true; };
-  bool validateDataType() { return true; };
+protected:
+    // Only available during runtime:
+    Block *_blockRef{nullptr};
 
- public:
+public:
+    // Only available during runtime:
+    DynamicData portData;
+
+public:
+    // callbacks
+    bool validateDimension() { return true; };
+
+    bool validateDataType() { return true; };
+
+public:
 
 };
 
 class InputPort : public Port {
- public:
-  int directFeedthrough{0};
+public:
+    int directFeedthrough{0};
 
- public:
-  /// autoCopyFromSimulink == true: copy data from simulink in each Update callback.
-  /// autoCopyFromSimulink == false: copy data from Simulink only when requestingUpdateFromSimulink is set. When dealing with large output
-  /// this one should be used.
-  bool autoCopyFromSimulink{true};
-  bool requestingUpdateFromSimulink{false};
-  InputPort(int portId, Block *blockRef, int dataTypeId) : Port(portId, blockRef, dataTypeId) {
-      DEBUGV_LIFECYCLE_PRINTF("InputPort: %d is created\n",
-                              portId);
-  }
-  virtual ~InputPort() { DEBUGV_LIFECYCLE_PRINTF("InputPort: %d is released\n", portId); }
+public:
+    /// autoCopyFromSimulink == true: copy data from simulink in each Update callback.
+    /// autoCopyFromSimulink == false: copy data from Simulink only when requestingUpdateFromSimulink is set. When dealing with large output
+    /// this one should be used.
+    bool autoCopyFromSimulink{true};
+    bool requestingUpdateFromSimulink{false};
+
+    InputPort(const InputPort &ref) = default;
+
+    InputPort(int portId, Block *blockRef, int dataTypeId) : Port(portId, blockRef, dataTypeId) {
+        DEBUGV_LIFECYCLE_PRINTF("InputPort: %d is created\n",
+                                portId);
+    }
+
+    virtual ~InputPort() { DEBUGV_LIFECYCLE_PRINTF("InputPort: %d is released\n", portId); }
 };
 
 class OutputPort : public Port {
- public:
-  OutputPort(int portId, Block *blockRef, int dataTypeId) : Port(portId, blockRef, dataTypeId) {
-      DEBUGV_LIFECYCLE_PRINTF("OutputPort: %d is created\n", portId);
-  };
-  /// autoCopyToSimulink == true: copy data to Simulink when data is different.
-  /// autoCopyToSimulink == false: copy data to Simulink only when requestingUpdateToSimulink is set. When dealing with large output
-  /// this one should be used.
-  bool autoCopyToSimulink{true};
-  bool requestingUpdateToSimulink{false};
-  virtual ~OutputPort() {
-      DEBUGV_LIFECYCLE_PRINTF("OutputPort: %d is released\n", portId);
-  };
+public:
+    OutputPort(const OutputPort &ref) = default;
+
+    OutputPort(int portId, Block *blockRef, int dataTypeId) : Port(portId, blockRef, dataTypeId) {
+        DEBUGV_LIFECYCLE_PRINTF("OutputPort: %d is created\n", portId);
+    };
+    /// autoCopyToSimulink == true: copy data to Simulink when data is different.
+    /// autoCopyToSimulink == false: copy data to Simulink only when requestingUpdateToSimulink is set. When dealing with large output
+    /// this one should be used.
+    bool autoCopyToSimulink{true};
+    bool requestingUpdateToSimulink{false};
+
+    virtual ~OutputPort() {
+        DEBUGV_LIFECYCLE_PRINTF("OutputPort: %d is released\n", portId);
+    };
 };
 
 #endif //SIMEX_PORT_H

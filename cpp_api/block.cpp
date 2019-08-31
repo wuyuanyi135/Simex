@@ -13,7 +13,7 @@ Block::~Block() {
     DEBUGV_LIFECYCLE_PRINTF("Block destroyed\n");
 }
 
-void Block::registerInputPort(int dataTypeId,
+std::shared_ptr<InputPort> Block::registerInputPort(int dataTypeId,
                               int numDimension,
                               int *dimensions,
                               int complexity,
@@ -29,9 +29,11 @@ void Block::registerInputPort(int dataTypeId,
     ip->acceptFrameData = acceptFrameData;
     ip->directFeedthrough = directFeedthrough;
     // use buildXXX adapter to provide customizable port type
-    inputPorts.push_back(buildInputPort(ip));
+    const std::shared_ptr<InputPort> transformed = buildInputPort(ip);
+    inputPorts.push_back(transformed);
+    return transformed;
 }
-void Block::registerOutputPort(int dataTypeId,
+std::shared_ptr<OutputPort> Block::registerOutputPort(int dataTypeId,
                                int numDimension,
                                int *dimensions,
                                int complexity,
@@ -45,10 +47,12 @@ void Block::registerOutputPort(int dataTypeId,
     op->dataTypeId = dataTypeId;
     op->complexity = complexity;
     op->acceptFrameData = acceptFrameData;
-    outputPorts.push_back(buildOutputPort(op));
+    const std::shared_ptr<OutputPort> transformed = buildOutputPort(op);
+    outputPorts.push_back(transformed);
+    return transformed;
 }
 
-void Block::registerVariableSizedInputPort(int dataTypeId,
+std::shared_ptr<InputPort> Block::registerVariableSizedInputPort(int dataTypeId,
                                            int complexity,
                                            int acceptFrameData,
                                            int directFeedthrough) {
@@ -60,16 +64,20 @@ void Block::registerVariableSizedInputPort(int dataTypeId,
     ip->complexity = complexity;
     ip->acceptFrameData = acceptFrameData;
     ip->directFeedthrough = directFeedthrough;
-    inputPorts.push_back(buildInputPort(ip));
+    const std::shared_ptr<InputPort> transformed = buildInputPort(ip);
+    inputPorts.push_back(transformed);
+    return transformed;
 }
-void Block::registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData) {
+std::shared_ptr<OutputPort> Block::registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData) {
     int id = outputPorts.size();
     std::shared_ptr<OutputPort> op = std::make_shared<OutputPort>(id, this, dataTypeId);
     op->dynamicDimension = true;
     op->dataTypeId = dataTypeId;
     op->complexity = complexity;
     op->acceptFrameData = acceptFrameData;
-    outputPorts.push_back(buildOutputPort(op));
+    const std::shared_ptr<OutputPort> transformed = buildOutputPort(op);
+    outputPorts.push_back(transformed);
+    return transformed;
 }
 void Block::onInitializeRuntime() {
 

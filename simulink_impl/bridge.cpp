@@ -191,7 +191,7 @@ int _output(SimStruct *S) {
             DEBUG_ASSERT(ip->portData.data, "Input port has invalid data pointer");
             if (ip->portData.data != nullptr) {
                 InputPtrsType inputSignalPtrs = ssGetInputPortSignalPtrs(S, ip->portId);
-                memcpy(ip->portData.data, *inputSignalPtrs, totalSize);
+                memcpy(ip->portData.data.get(), *inputSignalPtrs, totalSize);
             }
         }
     }
@@ -211,7 +211,7 @@ int _output(SimStruct *S) {
             DEBUG_ASSERT(op->portData.data, "Output port has invalid data pointer");
             if (op->portData.data != nullptr) {
                 void *outputPortSignal = ssGetOutputPortSignal(S, op->portId);
-                memcpy(outputPortSignal, op->portData.data, op->portData.size);
+                memcpy(outputPortSignal, op->portData.data.get(), op->portData.size);
             }
         }
     }
@@ -246,7 +246,7 @@ int _update(SimStruct *S) {
             DEBUG_ASSERT(ip->portData.data, "Input port has invalid data pointer");
             if (ip->portData.data != nullptr) {
                 InputPtrsType inputSignalPtrs = ssGetInputPortSignalPtrs(S, ip->portId);
-                memcpy(ip->portData.data, *inputSignalPtrs, totalSize);
+                memcpy(ip->portData.data.get(), *inputSignalPtrs, totalSize);
             }
         }
     }

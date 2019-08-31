@@ -37,25 +37,25 @@ public:
     bool allowSignalsWithMoreThan2D{false};
     std::vector<SampleTime> sampleTime;
 
-    virtual void registerInputPort(int dataTypeId,
+    virtual std::shared_ptr<InputPort> registerInputPort(int dataTypeId,
                                    int numDimension,
                                    int *dimensions,
                                    int complexity,
                                    int acceptFrameData,
                                    int directFeedthrough);
 
-    virtual void registerOutputPort(int dataTypeId,
+    virtual std::shared_ptr<OutputPort> registerOutputPort(int dataTypeId,
                                     int numDimension,
                                     int *dimensions,
                                     int complexity,
                                     int acceptFrameData);
 
-    virtual void registerVariableSizedInputPort(int dataTypeId,
+    virtual std::shared_ptr<InputPort> registerVariableSizedInputPort(int dataTypeId,
                                                 int complexity,
                                                 int acceptFrameData,
                                                 int directFeedthrough);
 
-    virtual void registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData);
+    virtual std::shared_ptr<OutputPort> registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData);
 
     template<typename T>
     void registerBlockParameter(bool tunable) {
