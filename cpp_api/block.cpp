@@ -21,7 +21,8 @@ std::shared_ptr<InputPort> Block::registerInputPort(int dataTypeId,
                                                     int acceptFrameData,
                                                     int directFeedthrough) {
     int id = inputPorts.size();
-    std::shared_ptr<InputPort> ip = std::make_shared<InputPort>(id, this, dataTypeId);
+    int size = dimensionToWidth(dimensions, numDimension) * dataTypeIdToByteSize(dataTypeId);
+    std::shared_ptr<InputPort> ip = std::make_shared<InputPort>(id, this, dataTypeId, size);
     for (int i = 0; i < numDimension; ++i) {
         ip->dimension.push_back(dimensions[i]);
     }
@@ -41,7 +42,8 @@ std::shared_ptr<OutputPort> Block::registerOutputPort(int dataTypeId,
                                                       int complexity,
                                                       int acceptFrameData) {
     int id = outputPorts.size();
-    std::shared_ptr<OutputPort> op = std::make_shared<OutputPort>(id, this, dataTypeId);
+    int size = dimensionToWidth(dimensions, numDimension) * dataTypeIdToByteSize(dataTypeId);
+    std::shared_ptr<OutputPort> op = std::make_shared<OutputPort>(id, this, dataTypeId, size);
 
     for (int i = 0; i < numDimension; ++i) {
         op->dimension.push_back(dimensions[i]);
@@ -59,7 +61,8 @@ std::shared_ptr<InputPort> Block::registerVariableSizedInputPort(int dataTypeId,
                                                                  int acceptFrameData,
                                                                  int directFeedthrough) {
     int id = inputPorts.size();
-    std::shared_ptr<InputPort> ip = std::make_shared<InputPort>(id, this, dataTypeId);
+
+    std::shared_ptr<InputPort> ip = std::make_shared<InputPort>(id, this, dataTypeId, 0);
 
     ip->dynamicDimension = true;
     ip->dataTypeId = dataTypeId;
@@ -74,7 +77,7 @@ std::shared_ptr<InputPort> Block::registerVariableSizedInputPort(int dataTypeId,
 std::shared_ptr<OutputPort>
 Block::registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData) {
     int id = outputPorts.size();
-    std::shared_ptr<OutputPort> op = std::make_shared<OutputPort>(id, this, dataTypeId);
+    std::shared_ptr<OutputPort> op = std::make_shared<OutputPort>(id, this, dataTypeId, 0);
     op->dynamicDimension = true;
     op->dataTypeId = dataTypeId;
     op->complexity = complexity;
@@ -85,20 +88,6 @@ Block::registerVariableSizedOutputPort(int dataTypeId, int complexity, int accep
 }
 
 void Block::onInitializeRuntime() {
-
-    for (auto &p : inputPorts) {
-        if (!p->portData.data) {
-            int size = dimensionToWidth(p->dimension) * dataTypeIdToByteSize(p->dataTypeId);
-            p->portData.reallocate(size);
-        }
-    }
-
-    for (auto &p : outputPorts) {
-        if (!p->portData.data) {
-            int size = dimensionToWidth(p->dimension) * dataTypeIdToByteSize(p->dataTypeId);
-            p->portData.reallocate(size);
-        }
-    }
 
 }
 

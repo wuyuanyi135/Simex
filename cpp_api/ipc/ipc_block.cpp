@@ -90,7 +90,7 @@ void IPCBlock::NotifyInputPortUpdated() {
         if (localInputPort->allowRemote) {
             ipc::PortData data;
             data.id = localInputPort->portId;
-            data.dataRef = std::string(localInputPort->portData.data.get(), localInputPort->portData.size);
+            data.dataRef = localInputPort->portData.toString();
             msg.emplace_back(data);
         }
     }
@@ -145,20 +145,20 @@ void IPCBlock::NotifyBlockInfo() {
 void IPCBlock::broadcastMessage(const std::string &str) {
     std::shared_ptr<std::string> s = std::make_shared<std::string>(str);
     for (int i = 0; i < clients.size(); i++) {
-        auto &peer = clients[i];
-        sendMessage(str, peer);
+        auto &sr = clients[i];
+        sendMessage(str, sr);
     }
 }
 
-void IPCBlock::sendMessage(const std::string &str, std::shared_ptr<tcp::socket> peer) {
+void IPCBlock::sendMessage(const std::string &str, std::shared_ptr<SocketResources> sr) {
     std::shared_ptr<std::string> s = std::make_shared<std::string>(str);
-    peer->async_send(
+    sr->socket->async_send(
             buffer(*s),
             // shared_ptr should be passed as value; The reference is invalid in the lambda.
-            [&, s, peer](const boost::system::error_code &ec, std::size_t bytes_transferred) {
+            [&, s, sr](const boost::system::error_code &ec, std::size_t bytes_transferred) {
                 if (ec) {
                     delegateDebugPrint("Send handler error: " + ec.message() + "\n");
-                    closeSocket(peer);
+                    closeSocket(sr);
                 }
             });
 }
@@ -181,9 +181,10 @@ void IPCBlock::acceptHandler(const boost::system::error_code &error, tcp::socket
 
     NotifyStateChanged(currentState);
     try {
-        const std::shared_ptr<tcp::socket> &val = std::make_shared<tcp::socket>(std::move(peer));
-        clients.push_back(val);
-        attachAsyncReceiver(val);
+        const std::shared_ptr<SocketResources> &sr = std::make_shared<SocketResources>(peer,
+                                                                                       receiverBufferSize);
+        clients.push_back(sr);
+        attachAsyncReceiver(sr);
         delegateDebugPrint("New client connected\n");
     } catch (std::exception &e) {
         peer.close();
@@ -191,43 +192,39 @@ void IPCBlock::acceptHandler(const boost::system::error_code &error, tcp::socket
     }
 }
 
-void IPCBlock::attachAsyncReceiver(const std::shared_ptr<tcp::socket> &peer) {
-    char *allocatedBuffer = static_cast<char *>(socketReceiverPool.ordered_malloc(receiverBufferSize));
-    // Keep the buffer in memory
-    std::shared_ptr<char[]> keep(allocatedBuffer, [&](char *p) { socketReceiverPool.ordered_free(p); });
-    // Create a new receiving buffer
-    peer->async_read_some(
-            buffer(allocatedBuffer, receiverBufferSize),
-            [this, keep, peer](const boost::system::error_code &ec, std::size_t bytes_transferred) {
+void IPCBlock::attachAsyncReceiver(std::shared_ptr<SocketResources> sr) {
+    sr->socket->async_read_some(
+            buffer(sr->receiveBuffer.get(), receiverBufferSize),
+            [&, sr](const boost::system::error_code &ec, std::size_t bytes_transferred) {
                 if (ec) {
                     delegateDebugPrint("Receive handler error: " + ec.message() + "\n");
-                    closeSocket(peer);
+                    closeSocket(sr);
                     return;
                 }
                 streamUnpacker.reserve_buffer(bytes_transferred);
-                memcpy(streamUnpacker.buffer(), keep.get(), bytes_transferred);
+                memcpy(streamUnpacker.buffer(), sr->receiveBuffer.get(), bytes_transferred);
                 streamUnpacker.buffer_consumed(bytes_transferred);
 
                 msgpack::object_handle result;
                 while (streamUnpacker.next(result)) {
-                    processIncomingMessage(result, peer);
+                    processIncomingMessage(result, sr);
                 }
 
-                attachAsyncReceiver(peer);
+                attachAsyncReceiver(sr);
             }
     );
 }
 
-void IPCBlock::closeSocket(const std::shared_ptr<tcp::socket> &peer) {
-    if (!peer) {
+void IPCBlock::closeSocket(std::shared_ptr<SocketResources> sr) {
+    if (!sr) {
         // peer has been removed. This function was called due to async execution. Ignore.
         return;
     }
-    if (peer->is_open()) {
-        peer->shutdown(socket_base::shutdown_type::shutdown_both);
-        peer->close();
+    if (sr->socket->is_open()) {
+        sr->socket->shutdown(socket_base::shutdown_type::shutdown_both);
+        sr->socket->close();
     }
-    auto found = std::find(clients.begin(), clients.end(), peer);
+    auto found = std::find(clients.begin(), clients.end(), sr);
     if (found == clients.end()) {
         // Already removed
     } else {
@@ -248,9 +245,11 @@ void IPCBlock::makeOutboundMessage(ipc::MessageType type, T &payload, Stream &s)
     packer.pack(payload);
 }
 
-void IPCBlock::processIncomingMessage(msgpack::object_handle &oh, std::shared_ptr<tcp::socket> peer) {
+void IPCBlock::processIncomingMessage(msgpack::object_handle &oh, std::shared_ptr<SocketResources> sr) {
     const msgpack::object &object = oh.get();
     try {
+        std::lock_guard<std::mutex> lock(mainThreadAccessMutex);
+
         std::map<std::string, msgpack::object> map = object.as<std::map<std::string, msgpack::object>>();
         msgpack::object &t = map["t"];
         msgpack::object d;
@@ -265,6 +264,8 @@ void IPCBlock::processIncomingMessage(msgpack::object_handle &oh, std::shared_pt
                 // retrieve data object
                 d = map["d"];
                 dataVector = d.as<std::vector<msgpack::object>>();
+
+                // do not race with main thread
                 for (msgpack::object &dataObject : dataVector) {
                     ipc::PortData p;
                     p = dataObject.as<ipc::PortData>();
@@ -279,8 +280,7 @@ void IPCBlock::processIncomingMessage(msgpack::object_handle &oh, std::shared_pt
                     DEBUG_ASSERT(localOP, "Failed to cast IPCOutputPort");
 
                     if (localOP->allowRemote) {
-                        op->portData.reallocate(p.dataRef.size());
-                        memcpy(op->portData.data.get(), p.dataRef.c_str(), p.dataRef.size());
+                        op->portData.copyFrom(p.dataRef.c_str(), p.dataRef.size());
                     } else {
                         throw std::runtime_error("Output port " + std::to_string(p.id) + " is not writable");
                     }
@@ -302,7 +302,7 @@ void IPCBlock::processIncomingMessage(msgpack::object_handle &oh, std::shared_pt
         std::stringstream ss;
         std::string what = e.what();
         makeOutboundMessage(ipc::ERR, what, ss);
-        sendMessage(ss.str(), std::move(peer));
+        sendMessage(ss.str(), sr);
     }
 }
 

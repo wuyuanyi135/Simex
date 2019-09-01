@@ -12,28 +12,13 @@
 #include "sample_time.h"
 #include "dynamic_data.h"
 
-
-// Access the void* pointer of the output port
-#define OUTPUTPORT_POINTER(OUTPUTPORT) (OUTPUTPORT->portData.data.get())
-
-// Access the void* pointer of the input port
-#define INPUTPORT_POINTER(INPUTPORT) (INPUTPORT->portData.data.get())
-
-// Access the pointer with type cast short hand.
-#define OUTPUTPORT_TYPED_POINTER(OUTPUTPORT, T) ((T)OUTPUTPORT_POINTER(OUTPUTPORT))
-
-// Access the pointer with type cast short hand.
-#define INPUTPORT_TYPED_POINTER(INPUTPORT, T) ((T)INPUTPORT_POINTER(INPUTPORT))
-
-// Access the pointed memory (*(T)ptr) with type cast short hand.
-#define OUTPUTPORT_TARGET(OUTPUTPORT, T) (* OUTPUTPORT_TYPED_POINTER(OUTPUTPORT, T))
-#define INPUTPORT_TARGET(INPUTPORT, T) (* INPUTPORT_TYPED_POINTER(INPUTPORT, T))
-
 class Block;
 
 class Port {
 public:
-    Port(int portId, Block *blockRef, int dataTypeId) : portId(portId), _blockRef(blockRef), dataTypeId(dataTypeId) {}
+    Port(int portId, Block *blockRef, int dataTypeId, int portBufferSize) : portId(portId), _blockRef(blockRef),
+                                                                            dataTypeId(dataTypeId),
+                                                                            portData{portBufferSize} {}
 
     Port(const Port &ref) = default;
 
@@ -77,7 +62,7 @@ public:
 
     InputPort(const InputPort &ref) = default;
 
-    InputPort(int portId, Block *blockRef, int dataTypeId) : Port(portId, blockRef, dataTypeId) {
+    InputPort(int portId, Block *blockRef, int dataTypeId, int portBufferSize) : Port(portId, blockRef, dataTypeId, portBufferSize) {
         DEBUGV_LIFECYCLE_PRINTF("InputPort: %d is created\n",
                                 portId);
     }
@@ -89,7 +74,7 @@ class OutputPort : public Port {
 public:
     OutputPort(const OutputPort &ref) = default;
 
-    OutputPort(int portId, Block *blockRef, int dataTypeId) : Port(portId, blockRef, dataTypeId) {
+    OutputPort(int portId, Block *blockRef, int dataTypeId, int portBufferSize) : Port(portId, blockRef, dataTypeId, portBufferSize) {
         DEBUGV_LIFECYCLE_PRINTF("OutputPort: %d is created\n", portId);
     };
     /// autoCopyToSimulink == true: copy data to Simulink when data is different.

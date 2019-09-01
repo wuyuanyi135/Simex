@@ -9,3 +9,11 @@ int dimensionToWidth(std::vector<int>& dimension) {
     }
     return width;
 }
+
+int dimensionToWidth(const int *dimension, int size) {
+    int width = 1;
+    for (int i = 0; i < size; i ++) {
+        width *= dimension[i];
+    }
+    return width;
+}

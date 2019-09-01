@@ -38,11 +38,13 @@ class MatrixIOBlock : public Block {
   }
 
   void onUpdate() override {
-      auto in = INPUTPORT_TYPED_POINTER(inputPorts[0], UINT8_T *);
-      auto out = OUTPUTPORT_TYPED_POINTER(outputPorts[0], UINT8_T *);
+      auto in = inputPorts[0]->portData;
+      auto out = outputPorts[0]->portData;
+
       auto in_height = inputPorts[0]->dimension[0];
       auto in_width = inputPorts[0]->dimension[1];
       auto in_ch = inputPorts[0]->dimension[2];
+
       for (int c = 0; c < OUT_CH; ++c) {
           for (int w = 0; w < OUT_WIDTH; ++w) {
               for (int h = 0; h < OUT_HEIGHT; ++h) {

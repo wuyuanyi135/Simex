@@ -13,13 +13,13 @@ public:
 
     explicit IPCInputPort(const InputPort &ref);
 
-    IPCInputPort(int portId, Block *blockRef, int dataTypeId);
+    IPCInputPort(int portId, Block *blockRef, int dataTypeId, int size);
 };
 class IPCOutputPort: public OutputPort {
 public:
     bool allowRemote{true};
 
-    IPCOutputPort(int portId, Block *blockRef, int dataTypeId);
+    IPCOutputPort(int portId, Block *blockRef, int dataTypeId, int size);
 
     explicit IPCOutputPort(const OutputPort& ref);
 };

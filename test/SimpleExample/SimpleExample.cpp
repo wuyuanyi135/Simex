@@ -35,9 +35,8 @@ class SimpleExampleBlock : public Block {
   }
 
   void onOutput() override {
-      // Expansion:         (* (real64_T*) (outputPorts[0]->data)) = *(real64_T *) inputPorts[0]->data + *(real64_T *) inputPorts[1]->data;
-      OUTPUTPORT_TARGET(outputPorts[0], real64_T*) =
-          INPUTPORT_TARGET(inputPorts[0], real64_T*) + INPUTPORT_TARGET(inputPorts[1], real64_T*);
+      real64_T d = inputPorts[0]->portData.as<real64_T>() + inputPorts[1]->portData.as<real64_T>();
+      outputPorts[0]->portData.set<real64_T >(d);
   }
 };
 

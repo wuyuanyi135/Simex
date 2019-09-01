@@ -7,4 +7,6 @@
 
 #include <vector>
 int dimensionToWidth(std::vector<int>& dimension);
+int dimensionToWidth(const int* dimension, int size);
+
 #endif //SIMEX_DIMENSION_TO_WIDTH_H

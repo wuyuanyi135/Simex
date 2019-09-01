@@ -169,7 +169,7 @@ int _terminate(SimStruct *S) {
 int _output(SimStruct *S) {
     auto pm = BlockPersistenceRegistry::getRegistry(S);
     DEBUG_ASSERT (pm->block, "The block is not created when outputting!");
-
+    std::lock_guard<std::mutex> lock(pm->block->mainThreadAccessMutex);
     // direct feedthrough should be updated prior to the callback.
     for (std::shared_ptr<InputPort> &ip : pm->block->inputPorts) {
         bool update = false;
@@ -184,15 +184,10 @@ int _output(SimStruct *S) {
             auto el = ssGetInputPortWidth(S, ip->portId);
             int_T sizePerElement = dataTypeIdToByteSize(ssGetInputPortDataType(S, ip->portId));
             int_T totalSize = sizePerElement * el;
-            if (ip->portData.size < totalSize) {
-                throw std::length_error("Input port has insufficient buffer size");
-            }
-
-            DEBUG_ASSERT(ip->portData.data, "Input port has invalid data pointer");
-            if (ip->portData.data != nullptr) {
-                InputPtrsType inputSignalPtrs = ssGetInputPortSignalPtrs(S, ip->portId);
-                memcpy(ip->portData.data.get(), *inputSignalPtrs, totalSize);
-            }
+            DEBUG_ASSERT(ip->portData.getSize() == totalSize, "Input port buffer size mismatch!");
+            // Copy directFeedthrough data to input ports.
+            InputPtrsType inputSignalPtrs = ssGetInputPortSignalPtrs(S, ip->portId);
+            ip->portData.copyFrom(*inputSignalPtrs, totalSize);
         }
     }
     pm->block->onOutput();
@@ -208,11 +203,8 @@ int _output(SimStruct *S) {
         }
 
         if (update) {
-            DEBUG_ASSERT(op->portData.data, "Output port has invalid data pointer");
-            if (op->portData.data != nullptr) {
-                void *outputPortSignal = ssGetOutputPortSignal(S, op->portId);
-                memcpy(outputPortSignal, op->portData.data.get(), op->portData.size);
-            }
+            void *outputPortSignal = ssGetOutputPortSignal(S, op->portId);
+            op->portData.copyTo(outputPortSignal, op->portData.getSize());
         }
     }
     return 0;
@@ -223,8 +215,8 @@ int _update(SimStruct *S) {
     DEBUG_ASSERT(pm->block, "The block is not created when updating!");
 //    ssPrintf("Port %d: %lf\n", 0,     *ssGetInputPortRealSignalPtrs(S, 0)[0]);
 //    ssPrintf("Port %d: %lf\n", 1,     *ssGetInputPortRealSignalPtrs(S, 1)[0]);
-
-    for (std::shared_ptr<InputPort>& ip : pm->block->inputPorts) {
+    std::lock_guard<std::mutex> lock(pm->block->mainThreadAccessMutex);
+    for (std::shared_ptr<InputPort> &ip : pm->block->inputPorts) {
         bool update = false;
         if (ip->autoCopyFromSimulink) {
             update = true;
@@ -239,15 +231,10 @@ int _update(SimStruct *S) {
             int_T sizePerElement;
             sizePerElement = dataTypeIdToByteSize(ssGetInputPortDataType(S, ip->portId));
             int_T totalSize = sizePerElement * el;
-            if (ip->portData.size < totalSize) {
-                throw std::length_error("Input port has insufficient buffer size");
-            }
+            DEBUG_ASSERT(ip->portData.getSize() == totalSize, "Input port buffer size mismatch!");
 
-            DEBUG_ASSERT(ip->portData.data, "Input port has invalid data pointer");
-            if (ip->portData.data != nullptr) {
-                InputPtrsType inputSignalPtrs = ssGetInputPortSignalPtrs(S, ip->portId);
-                memcpy(ip->portData.data.get(), *inputSignalPtrs, totalSize);
-            }
+            InputPtrsType inputSignalPtrs = ssGetInputPortSignalPtrs(S, ip->portId);
+            ip->portData.copyFrom(*inputSignalPtrs, totalSize);
         }
     }
 
@@ -270,8 +257,7 @@ int _setOutputPortDimensionInfo(SimStruct *S, int_T port, const DimsInfo_T *dims
 
     if (pm->block->outputPorts[port]->validateDimension()) {
         ssSetOutputPortDimensionInfo(S, port, dims);
-        // delete the current data pointer (if any)
-        p->portData.reallocate(size);
+        p->portData.resize(size);
     } else {
         throw std::invalid_argument("Output port dimension error");
     }
@@ -292,8 +278,7 @@ int _setInputPortDimensionInfo(SimStruct *S, int_T port, const DimsInfo_T *dims)
 
     if (pm->block->inputPorts[port]->validateDimension()) {
         ssSetInputPortDimensionInfo(S, port, dims);
-        // delete the current data pointer (if any)
-        p->portData.reallocate(size);
+        p->portData.resize(size);
     } else {
         throw std::invalid_argument("Input port dimension error");
     }

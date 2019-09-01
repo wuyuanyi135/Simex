@@ -97,14 +97,20 @@ protected:
 
     virtual std::shared_ptr<OutputPort> buildOutputPort(std::shared_ptr<OutputPort> ref);
 
+public:
+    std::mutex mainThreadAccessMutex;
+
 protected:
     // single-threading utilities
-    virtual void stopRequest(const std::string& msg);
+    virtual void stopRequest(const std::string &msg);
+
 protected:
     // multi-threading utilities
-    virtual void delegatePrint(const std::string& msg);
-    virtual void delegateDebugPrint(const std::string& msg);
-    virtual void delegateStopRequest(const std::string& msg);
+    virtual void delegatePrint(const std::string &msg);
+
+    virtual void delegateDebugPrint(const std::string &msg);
+
+    virtual void delegateStopRequest(const std::string &msg);
 };
 
 #endif //SIMEX_BLOCK_H

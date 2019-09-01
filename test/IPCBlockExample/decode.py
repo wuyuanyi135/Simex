@@ -36,7 +36,6 @@ def sender():
         s.send(buf)
 
         counter += 1
-
         buf = msgpack.packb({
             b"t": 2,
             b"d": [{
@@ -45,7 +44,7 @@ def sender():
             }]})
         print("".join("%02x" % b for b in buf))
         s.send(buf)
-        time.sleep(3)
+        time.sleep(0.5)
 
 
 recv_thread = threading.Thread(target=receiver)

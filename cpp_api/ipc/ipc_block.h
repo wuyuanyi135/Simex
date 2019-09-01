@@ -10,10 +10,10 @@
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/pool/pool.hpp>
 
 #include <thread>
 #include <string>
+#include <cpp_api/socket_resources.h>
 
 #include "block_state.h"
 #include "block.h"
@@ -22,7 +22,6 @@
 
 using namespace boost::asio;
 using namespace boost::asio::ip;
-using Pool = boost::pool<boost::default_user_allocator_malloc_free>;
 
 class IPCBlock : public Block {
 public:
@@ -66,10 +65,9 @@ protected:
     // networking members
     io_service ioService;
     std::unique_ptr<tcp::acceptor> acceptor; // will be initialized later
-    std::vector<std::shared_ptr<tcp::socket>> clients;
+    std::vector<std::shared_ptr<SocketResources>> clients;
     std::thread backgroundThread;
 
-    Pool socketReceiverPool{receiverBufferSize, receiverBufferSize};
     msgpack::unpacker streamUnpacker{};
 
 protected:
@@ -77,17 +75,17 @@ protected:
     void acceptHandler(const boost::system::error_code &error, tcp::socket peer);
 
     void broadcastMessage(const std::string& str);
-    void sendMessage(const std::string& str, std::shared_ptr<tcp::socket> peer);
+    void sendMessage(const std::string& str, std::shared_ptr<SocketResources> sr);
 
-    void attachAsyncReceiver(const std::shared_ptr<tcp::socket>& peer);
+    void attachAsyncReceiver(std::shared_ptr<SocketResources> sr);
 
     // remove the peer from registered clienconst ts
-    void closeSocket(const std::shared_ptr<tcp::socket>&);
+    void closeSocket(std::shared_ptr<SocketResources> sr);
 
 protected:
     template <typename T, typename Stream>
     void makeOutboundMessage(ipc::MessageType type, T& payload, Stream& s);
-    void processIncomingMessage(msgpack::object_handle& oh, std::shared_ptr<tcp::socket> peer);
+    void processIncomingMessage(msgpack::object_handle& oh, std::shared_ptr<SocketResources> sr);
 
     std::shared_ptr<InputPort> buildInputPort(std::shared_ptr<InputPort> ref) override;
 
