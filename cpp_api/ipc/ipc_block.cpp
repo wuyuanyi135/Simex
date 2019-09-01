@@ -258,8 +258,7 @@ void IPCBlock::processIncomingMessage(msgpack::object_handle &oh, std::shared_pt
         std::map<std::string, msgpack::object> map = object.as<std::map<std::string, msgpack::object>>();
         msgpack::object &t = map["t"];
         msgpack::object d;
-        std::vector<ipc::PortData> portData;
-
+        std::vector<msgpack::object> dataVector;
         int messageType = t.as<int>();
         switch (messageType) {
             case ipc::STATUS:
@@ -269,9 +268,9 @@ void IPCBlock::processIncomingMessage(msgpack::object_handle &oh, std::shared_pt
             case ipc::PORTS:
                 // retrieve data object
                 d = map["d"];
-
-                portData = d.as<std::vector<ipc::PortData>>();
-                for (ipc::PortData &p : portData) {
+                dataVector = d.as<std::vector<msgpack::object>>();
+                for (msgpack::object &dataObject : dataVector) {
+                    ipc::PortData p = dataObject.as<ipc::PortData>();
                     if (p.id >= outputPorts.size()) {
                         throw RuntimeError("Port id out of range");
                     }
@@ -302,10 +301,8 @@ void IPCBlock::processIncomingMessage(msgpack::object_handle &oh, std::shared_pt
     } catch (msgpack::type_error &e) {
         // packet is invalid
         throw RuntimeError("Packet type mismatch");
-    } catch (RuntimeError &e) {
-#ifdef DEBUG
+    } catch (std::exception &e) {
         delegateService.dispatch([&e]() { DEBUG_PRINTF(e.what()); });
-#endif
         std::stringstream ss;
         std::string what = e.what();
         makeOutboundMessage(ipc::ERR, what, ss);
