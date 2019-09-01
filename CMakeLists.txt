@@ -1,24 +1,28 @@
 cmake_minimum_required(VERSION 3.14)
 project(Simex)
 
+# Find dependencies
 find_package(Matlab REQUIRED)
-# TODO: optionally build ipc
-set(BOOST_ROOT "C:/Users/wuyua/Downloads/boost_1_71_0")
-set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost REQUIRED COMPONENTS system unit_test_framework)
-
 
 set(Simulink_DIR ${Matlab_ROOT_DIR}/simulink)
 
+# If find boost failed, make sure BOOST_ROOT is set properly on your environment variables.
+set(Boost_USE_STATIC_LIBS ON)
+find_package(Boost REQUIRED COMPONENTS system unit_test_framework)
 include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
 include_directories(${Matlab_INCLUDE_DIRS})
 include_directories(${Simulink_DIR}/include)
 include_directories(.)
 link_directories(${Boost_LIBRARY_DIRS})
 
+# Macro flags
 add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 add_compile_definitions(S_FUNCTION_LEVEL=2)
-
+if(WIN32)
+    add_compile_definitions(_WIN32_WINNT=0x0601)
+endif()
 # options
 
 file(GLOB SIMULINK_IMPL_SOURCES simulink_impl/*.c simulink_impl/*.cpp)

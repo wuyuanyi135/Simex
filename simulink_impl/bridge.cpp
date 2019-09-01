@@ -27,21 +27,21 @@ int _initializeMeta(SimStruct *S) {
     "Failed to set number of input ports");
 
     for (int_T i = 0; i < blk->inputPorts.size(); i++) {
-        InputPort &ip = blk->inputPorts[i];
+        auto &ip = blk->inputPorts[i];
         // TODO: port-based sample time
         // ssSetInputPortOffsetTime(S, i, ip.sampleTime.offset);
         // ssSetInputPortSampleTime(S, i, ip.sampleTime.sampleTime);
-        ssSetInputPortFrameData(S, i, ip.acceptFrameData);
-        ssSetInputPortComplexSignal(S, i, ip.complexity);
-        ssSetInputPortDirectFeedThrough(S, i, ip.directFeedthrough);
-        ssSetInputPortDataType(S, i, ip.dataTypeId);
+        ssSetInputPortFrameData(S, i, ip->acceptFrameData);
+        ssSetInputPortComplexSignal(S, i, ip->complexity);
+        ssSetInputPortDirectFeedThrough(S, i, ip->directFeedthrough);
+        ssSetInputPortDataType(S, i, ip->dataTypeId);
 
-        if (ip.dynamicDimension) {
+        if (ip->dynamicDimension) {
             DEBUG_ASSERT(ssSetInputPortDimensionInfo(S, i, DYNAMIC_DIMENSION),
                          "Failed to set dynamic dimension input port dimension info");
         } else {
             DECL_AND_INIT_DIMSINFO(di);
-            auto sz = static_cast<int_T>(ip.dimension.size());
+            auto sz = static_cast<int_T>(ip->dimension.size());
             int_T dims[MAX_DIM];
 
             if (sz > MAX_DIM) {
@@ -49,10 +49,10 @@ int _initializeMeta(SimStruct *S) {
             }
 
             for (int i = 0; i < sz; i++) {
-                dims[i] = ip.dimension[i];
+                dims[i] = ip->dimension[i];
             }
 
-            di.width = dimensionToWidth(ip.dimension);
+            di.width = dimensionToWidth(ip->dimension);
             di.numDims = sz;
             di.dims = dims;
             DEBUG_ASSERT(ssSetInputPortDimensionInfo(S, i, &di), "Failed to set input port dimension info");
@@ -65,21 +65,21 @@ int _initializeMeta(SimStruct *S) {
     "Failed to set number of output ports");
     DEBUG_PRINTF("Output port size: %d\n", blk->outputPorts.size());
     for (int i = 0; i < blk->outputPorts.size(); i++) {
-        OutputPort &op = blk->outputPorts[i];
+        auto &op = blk->outputPorts[i];
         // TODO: port-based sample time
         // ssSetOutputPortOffsetTime(S, i, op.sampleTime.offset);
         // ssSetOutputPortSampleTime(S, i, op.sampleTime.sampleTime);
-        ssSetOutputPortFrameData(S, i, op.acceptFrameData);
-        ssSetOutputPortComplexSignal(S, i, op.complexity);
-        ssSetOutputPortDataType(S, i, op.dataTypeId);
+        ssSetOutputPortFrameData(S, i, op->acceptFrameData);
+        ssSetOutputPortComplexSignal(S, i, op->complexity);
+        ssSetOutputPortDataType(S, i, op->dataTypeId);
 
-        if (op.dynamicDimension) {
+        if (op->dynamicDimension) {
             DEBUG_ASSERT(ssSetOutputPortDimensionInfo(S, i, DYNAMIC_DIMENSION),
                          "Failed to set dynamic dimension output port dimension info");
         } else {
 
             DECL_AND_INIT_DIMSINFO(di);
-            auto sz = static_cast<int_T>(op.dimension.size());
+            auto sz = static_cast<int_T>(op->dimension.size());
 
             int_T dims[MAX_DIM];
 
@@ -88,10 +88,10 @@ int _initializeMeta(SimStruct *S) {
             }
 
             for (int i = 0; i < sz; i++) {
-                dims[i] = op.dimension[i];
+                dims[i] = op->dimension[i];
             }
 
-            di.width = dimensionToWidth(op.dimension);
+            di.width = dimensionToWidth(op->dimension);
             di.numDims = sz;
             di.dims = dims;
             DEBUG_ASSERT(ssSetOutputPortDimensionInfo(S, i, &di), "Failed to set output port dimension info");
@@ -171,47 +171,47 @@ int _output(SimStruct *S) {
     DEBUG_ASSERT (pm->block, "The block is not created when outputting!");
 
     // direct feedthrough should be updated prior to the callback.
-    for (InputPort &ip : pm->block->inputPorts) {
+    for (std::shared_ptr<InputPort> &ip : pm->block->inputPorts) {
         bool update = false;
-        if (ip.autoCopyFromSimulink) {
+        if (ip->autoCopyFromSimulink) {
             update = true;
         } else {
-            if (ip.requestingUpdateFromSimulink) {
+            if (ip->requestingUpdateFromSimulink) {
                 update = true;
             }
         }
-        if (update && ip.directFeedthrough) {
-            int_T el = ssGetInputPortWidth(S, ip.portId);
-            int_T sizePerElement = dataTypeIdToByteSize(ssGetInputPortDataType(S, ip.portId));
+        if (update && ip->directFeedthrough) {
+            auto el = ssGetInputPortWidth(S, ip->portId);
+            int_T sizePerElement = dataTypeIdToByteSize(ssGetInputPortDataType(S, ip->portId));
             int_T totalSize = sizePerElement * el;
-            if (ip.portData.size < totalSize) {
+            if (ip->portData.size < totalSize) {
                 throw std::length_error("Input port has insufficient buffer size");
             }
 
-            DEBUG_ASSERT(ip.portData.data, "Input port has invalid data pointer");
-            if (ip.portData.data != nullptr) {
-                InputPtrsType inputSignalPtrs = ssGetInputPortSignalPtrs(S, ip.portId);
-                memcpy(ip.portData.data, *inputSignalPtrs, totalSize);
+            DEBUG_ASSERT(ip->portData.data, "Input port has invalid data pointer");
+            if (ip->portData.data != nullptr) {
+                InputPtrsType inputSignalPtrs = ssGetInputPortSignalPtrs(S, ip->portId);
+                memcpy(ip->portData.data.get(), *inputSignalPtrs, totalSize);
             }
         }
     }
     pm->block->onOutput();
 
-    for (OutputPort &op : pm->block->outputPorts) {
+    for (std::shared_ptr<OutputPort> &op : pm->block->outputPorts) {
         bool update = false;
-        if (op.autoCopyToSimulink) {
+        if (op->autoCopyToSimulink) {
             update = true;
         } else {
-            if (op.requestingUpdateToSimulink) {
+            if (op->requestingUpdateToSimulink) {
                 update = true;
             }
         }
 
         if (update) {
-            DEBUG_ASSERT(op.portData.data, "Output port has invalid data pointer");
-            if (op.portData.data != nullptr) {
-                void *outputPortSignal = ssGetOutputPortSignal(S, op.portId);
-                memcpy(outputPortSignal, op.portData.data, op.portData.size);
+            DEBUG_ASSERT(op->portData.data, "Output port has invalid data pointer");
+            if (op->portData.data != nullptr) {
+                void *outputPortSignal = ssGetOutputPortSignal(S, op->portId);
+                memcpy(outputPortSignal, op->portData.data.get(), op->portData.size);
             }
         }
     }
@@ -224,28 +224,29 @@ int _update(SimStruct *S) {
 //    ssPrintf("Port %d: %lf\n", 0,     *ssGetInputPortRealSignalPtrs(S, 0)[0]);
 //    ssPrintf("Port %d: %lf\n", 1,     *ssGetInputPortRealSignalPtrs(S, 1)[0]);
 
-    for (InputPort &ip : pm->block->inputPorts) {
+    for (std::shared_ptr<InputPort>& ip : pm->block->inputPorts) {
         bool update = false;
-        if (ip.autoCopyFromSimulink) {
+        if (ip->autoCopyFromSimulink) {
             update = true;
         } else {
-            if (ip.requestingUpdateFromSimulink) {
+            if (ip->requestingUpdateFromSimulink) {
                 update = true;
             }
         }
 
-        if (update && !ip.directFeedthrough) {
-            int_T el = ssGetInputPortWidth(S, ip.portId);
-            int_T sizePerElement = dataTypeIdToByteSize(ssGetInputPortDataType(S, ip.portId));
+        if (update && !ip->directFeedthrough) {
+            int_T el = ssGetInputPortWidth(S, ip->portId);
+            int_T sizePerElement;
+            sizePerElement = dataTypeIdToByteSize(ssGetInputPortDataType(S, ip->portId));
             int_T totalSize = sizePerElement * el;
-            if (ip.portData.size < totalSize) {
+            if (ip->portData.size < totalSize) {
                 throw std::length_error("Input port has insufficient buffer size");
             }
 
-            DEBUG_ASSERT(ip.portData.data, "Input port has invalid data pointer");
-            if (ip.portData.data != nullptr) {
-                InputPtrsType inputSignalPtrs = ssGetInputPortSignalPtrs(S, ip.portId);
-                memcpy(ip.portData.data, *inputSignalPtrs, totalSize);
+            DEBUG_ASSERT(ip->portData.data, "Input port has invalid data pointer");
+            if (ip->portData.data != nullptr) {
+                InputPtrsType inputSignalPtrs = ssGetInputPortSignalPtrs(S, ip->portId);
+                memcpy(ip->portData.data.get(), *inputSignalPtrs, totalSize);
             }
         }
     }
@@ -260,38 +261,39 @@ int _setOutputPortDimensionInfo(SimStruct *S, int_T port, const DimsInfo_T *dims
     DEBUG_ASSERT(pm->block, "Block is not created in output dimension info callback");
 
     auto &p = pm->block->outputPorts[port];
-    p.dimension.clear();
+    p->dimension.clear();
 
     for (int i = 0; i < dims->numDims; ++i) {
-        p.dimension.push_back(dims->dims[i]);
+        p->dimension.push_back(dims->dims[i]);
     }
-    int size = dimensionToWidth(p.dimension) * dataTypeIdToByteSize(p.dataTypeId);
+    int size = dimensionToWidth(p->dimension) * dataTypeIdToByteSize(p->dataTypeId);
 
-    if (pm->block->outputPorts[port].validateDimension()) {
+    if (pm->block->outputPorts[port]->validateDimension()) {
         ssSetOutputPortDimensionInfo(S, port, dims);
         // delete the current data pointer (if any)
-        p.portData.reallocate(size);
+        p->portData.reallocate(size);
     } else {
         throw std::invalid_argument("Output port dimension error");
     }
     return 0;
 }
+
 int _setInputPortDimensionInfo(SimStruct *S, int_T port, const DimsInfo_T *dims) {
     auto pm = BlockPersistenceRegistry::getRegistry(S);
     DEBUG_ASSERT(pm->block, "Block is not created in input dimension info callback");
 
     auto &p = pm->block->inputPorts[port];
-    p.dimension.clear();
+    p->dimension.clear();
 
     for (int i = 0; i < dims->numDims; ++i) {
-        p.dimension.push_back(dims->dims[i]);
+        p->dimension.push_back(dims->dims[i]);
     }
-    int size = dimensionToWidth(p.dimension) * dataTypeIdToByteSize(p.dataTypeId);
+    int size = dimensionToWidth(p->dimension) * dataTypeIdToByteSize(p->dataTypeId);
 
-    if (pm->block->inputPorts[port].validateDimension()) {
+    if (pm->block->inputPorts[port]->validateDimension()) {
         ssSetInputPortDimensionInfo(S, port, dims);
         // delete the current data pointer (if any)
-        p.portData.reallocate(size);
+        p->portData.reallocate(size);
     } else {
         throw std::invalid_argument("Input port dimension error");
     }
@@ -302,8 +304,8 @@ int _setOutputPortDataType(SimStruct *S, int_T port, int dataTypeId) {
     auto pm = BlockPersistenceRegistry::getRegistry(S);
     DEBUG_ASSERT(pm->block, "Block is not created in output data type callback");
     auto &p = pm->block->outputPorts[port];
-    p.dataTypeId = dataTypeId;
-    if (p.validateDataType()) {
+    p->dataTypeId = dataTypeId;
+    if (p->validateDataType()) {
         ssSetOutputPortDataType(S, port, dataTypeId);
     } else {
         throw std::invalid_argument("Output port data type id error");
@@ -315,8 +317,8 @@ int _setInputPortDataType(SimStruct *S, int_T port, int dataTypeId) {
     auto pm = BlockPersistenceRegistry::getRegistry(S);
     DEBUG_ASSERT(pm->block, "Block is not created in input data type callback");
     auto &p = pm->block->inputPorts[port];
-    p.dataTypeId = dataTypeId;
-    if (p.validateDataType()) {
+    p->dataTypeId = dataTypeId;
+    if (p->validateDataType()) {
         ssSetInputPortDataType(S, port, dataTypeId);
     } else {
         throw std::invalid_argument("Input port data type id error");
@@ -332,7 +334,7 @@ int _checkParameters(SimStruct *S) {
     // TODO: when except does it release
     if (numParams != numExpected)
         throw std::invalid_argument("Dialog parameter number mismatch. Expect " + std::to_string(numExpected) + ". Got "
-                                        + std::to_string(numParams));
+                                    + std::to_string(numParams));
 
     for (int i = 0; i < numExpected; i++) {
         pm->block->dialogParameters[i]->onUpdateParameter(ssGetSFcnParam(S, i));

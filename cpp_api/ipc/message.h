@@ -4,37 +4,44 @@
 
 #ifndef SIMEX_MESSAGE_H
 #define SIMEX_MESSAGE_H
+
 #include "msgpack.hpp"
 #include "block_state.h"
+namespace ipc {
+    enum MessageType {
+        STATUS = 0,
+        PARAMS = 1,
+        PORTS = 2,
+        ERR = 3,
+        INFO = 4,
+    };
 
-class StateMessage {
- public:
-  int state{};
-  MSGPACK_DEFINE_MAP(state);
- public:
-  static void makeStateNotifyPacket(std::stringstream& sbuf, BlockState state) {
-      StateMessage msg;
-      msg.state = state;
-      msgpack::pack(sbuf, msg);
-  }
-};
+    struct PortData {
+        msgpack::type::raw_ref dataRef;
+        int id;
+        MSGPACK_DEFINE_MAP(id, dataRef);
+    };
 
-class ParameterMessage {
- public:
-  std::vector<std::string> params;
-  MSGPACK_DEFINE_MAP(params)
-};
+    struct PortInfo {
+        int typeId;
+        std::vector<int> dims;
+        int portId;
+        bool allowRemote;
 
-class PortMessageData {
- public:
-  std::vector<int> dims;
-  int typeId;
-  msgpack::type::raw_ref dataRef;
-  MSGPACK_DEFINE_MAP(dims, typeId, dataRef);
-};
-class PortUpdateMessage {
- public:
-  std::vector<PortMessageData> ports;
-  MSGPACK_DEFINE_MAP(ports);
-};
+        MSGPACK_DEFINE_MAP(typeId, portId, dims, allowRemote);
+    };
+    struct SampleTimeInfo {
+        double sampleTime;
+        double offsetTime;
+        MSGPACK_DEFINE_MAP(sampleTime, offsetTime);
+    };
+    struct BlockInfo {
+        std::vector<SampleTimeInfo> sampleTimes;
+        std::vector<PortInfo> inputPorts;
+        std::vector<PortInfo> outputPorts;
+
+        MSGPACK_DEFINE_MAP(sampleTimes, inputPorts, outputPorts);
+    };
+}
+
 #endif //SIMEX_MESSAGE_H
