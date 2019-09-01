@@ -43,6 +43,7 @@ def sender():
                 b"id": 0,
                 b"dataRef": struct.pack('d', counter)
             }]})
+        print("".join("%02x" % b for b in buf))
         s.send(buf)
         time.sleep(3)
 

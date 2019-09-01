@@ -5,6 +5,7 @@
 #include <simulink_impl/datatype_size.h>
 #include "block.h"
 #include "dimension_to_width.h"
+
 Block::Block(SimStruct &S) : simStructReference(&S) {
 
 }
@@ -14,11 +15,11 @@ Block::~Block() {
 }
 
 std::shared_ptr<InputPort> Block::registerInputPort(int dataTypeId,
-                              int numDimension,
-                              int *dimensions,
-                              int complexity,
-                              int acceptFrameData,
-                              int directFeedthrough) {
+                                                    int numDimension,
+                                                    int *dimensions,
+                                                    int complexity,
+                                                    int acceptFrameData,
+                                                    int directFeedthrough) {
     int id = inputPorts.size();
     std::shared_ptr<InputPort> ip = std::make_shared<InputPort>(id, this, dataTypeId);
     for (int i = 0; i < numDimension; ++i) {
@@ -33,11 +34,12 @@ std::shared_ptr<InputPort> Block::registerInputPort(int dataTypeId,
     inputPorts.push_back(transformed);
     return transformed;
 }
+
 std::shared_ptr<OutputPort> Block::registerOutputPort(int dataTypeId,
-                               int numDimension,
-                               int *dimensions,
-                               int complexity,
-                               int acceptFrameData) {
+                                                      int numDimension,
+                                                      int *dimensions,
+                                                      int complexity,
+                                                      int acceptFrameData) {
     int id = outputPorts.size();
     std::shared_ptr<OutputPort> op = std::make_shared<OutputPort>(id, this, dataTypeId);
 
@@ -53,9 +55,9 @@ std::shared_ptr<OutputPort> Block::registerOutputPort(int dataTypeId,
 }
 
 std::shared_ptr<InputPort> Block::registerVariableSizedInputPort(int dataTypeId,
-                                           int complexity,
-                                           int acceptFrameData,
-                                           int directFeedthrough) {
+                                                                 int complexity,
+                                                                 int acceptFrameData,
+                                                                 int directFeedthrough) {
     int id = inputPorts.size();
     std::shared_ptr<InputPort> ip = std::make_shared<InputPort>(id, this, dataTypeId);
 
@@ -68,7 +70,9 @@ std::shared_ptr<InputPort> Block::registerVariableSizedInputPort(int dataTypeId,
     inputPorts.push_back(transformed);
     return transformed;
 }
-std::shared_ptr<OutputPort> Block::registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData) {
+
+std::shared_ptr<OutputPort>
+Block::registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData) {
     int id = outputPorts.size();
     std::shared_ptr<OutputPort> op = std::make_shared<OutputPort>(id, this, dataTypeId);
     op->dynamicDimension = true;
@@ -79,16 +83,17 @@ std::shared_ptr<OutputPort> Block::registerVariableSizedOutputPort(int dataTypeI
     outputPorts.push_back(transformed);
     return transformed;
 }
+
 void Block::onInitializeRuntime() {
 
-    for (auto & p : inputPorts) {
+    for (auto &p : inputPorts) {
         if (!p->portData.data) {
             int size = dimensionToWidth(p->dimension) * dataTypeIdToByteSize(p->dataTypeId);
             p->portData.reallocate(size);
         }
     }
 
-    for (auto & p : outputPorts) {
+    for (auto &p : outputPorts) {
         if (!p->portData.data) {
             int size = dimensionToWidth(p->dimension) * dataTypeIdToByteSize(p->dataTypeId);
             p->portData.reallocate(size);
@@ -104,3 +109,26 @@ std::shared_ptr<OutputPort> Block::buildOutputPort(std::shared_ptr<OutputPort> r
 std::shared_ptr<InputPort> Block::buildInputPort(std::shared_ptr<InputPort> ref) {
     return ref;
 }
+
+void Block::stopRequest(const std::string &msg) {
+    ssSetErrorStatus(simStructReference, msg.c_str());
+    ssSetStopRequested(simStructReference, 1);
+}
+
+void Block::delegatePrint(const std::string &msg) {
+    const std::shared_ptr<std::string> keep = std::make_shared<std::string>(msg);
+    delegateService.post([keep]() { ssPrintf(keep->c_str()); });
+}
+
+void Block::delegateDebugPrint(const std::string &msg) {
+#ifdef DEBUG
+    const std::shared_ptr<std::string> keep = std::make_shared<std::string>(msg);
+    delegateService.post([keep]() { ssPrintf(keep->c_str()); });
+#endif
+}
+
+void Block::delegateStopRequest(const std::string &msg) {
+    const std::shared_ptr<std::string> keep = std::make_shared<std::string>(msg);
+    delegateService.post([&, keep]() { stopRequest(*keep); });
+}
+

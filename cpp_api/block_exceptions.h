@@ -16,16 +16,6 @@ public:
 
     const char *what() const noexcept override ;
 };
-class RuntimeError : public std::exception {
- public:
-  std::string msg;
-
-  explicit RuntimeError(std::string msg): msg(std::move(msg)){}
-
-  const char *what() const noexcept override {
-      return msg.c_str();
-  }
-};
 
 
 

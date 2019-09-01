@@ -17,7 +17,7 @@ namespace ipc {
     };
 
     struct PortData {
-        msgpack::type::raw_ref dataRef;
+        std::string dataRef;
         int id;
         MSGPACK_DEFINE_MAP(id, dataRef);
     };

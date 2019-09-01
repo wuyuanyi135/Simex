@@ -5,13 +5,14 @@
 #include "ipc_block.h"
 
 #include <utility>
+#include <string>
 #include "debug_utils.h"
 #include "block_exceptions.h"
 #include "message.h"
 #include "ipc_port.h"
 
 IPCBlock::IPCBlock(SimStruct &s) :
-    Block(s) {}
+        Block(s) {}
 
 IPCBlock::~IPCBlock() {
 
@@ -23,8 +24,8 @@ void IPCBlock::onStart() {
     acceptor = std::make_unique<tcp::acceptor>(ioService, endPoint);
     acceptor->listen();
     acceptor->async_accept(
-        ioService,
-        std::bind(&IPCBlock::acceptHandler, this, std::placeholders::_1, std::placeholders::_2)
+            ioService,
+            std::bind(&IPCBlock::acceptHandler, this, std::placeholders::_1, std::placeholders::_2)
     );
     backgroundThread = std::thread([&] { ioService.run(); });
     DEBUG_PRINTF("Listening on :%d\n", port);
@@ -89,8 +90,7 @@ void IPCBlock::NotifyInputPortUpdated() {
         if (localInputPort->allowRemote) {
             ipc::PortData data;
             data.id = localInputPort->portId;
-            data.dataRef.ptr = localInputPort->portData.data.get();
-            data.dataRef.size = localInputPort->portData.size;
+            data.dataRef = std::string(localInputPort->portData.data.get(), localInputPort->portData.size);
             msg.emplace_back(data);
         }
     }
@@ -153,43 +153,41 @@ void IPCBlock::broadcastMessage(const std::string &str) {
 void IPCBlock::sendMessage(const std::string &str, std::shared_ptr<tcp::socket> peer) {
     std::shared_ptr<std::string> s = std::make_shared<std::string>(str);
     peer->async_send(
-        buffer(*s),
-        // shared_ptr should be passed as value; The reference is invalid in the lambda.
-        [&, s, peer](const boost::system::error_code &ec, std::size_t bytes_transferred) {
-          if (ec) {
-              delegateService.post([&]() { DEBUG_PRINTF("Send handler error: %s\n", ec.message().c_str()); });
-              closeSocket(peer);
-          }
-        });
+            buffer(*s),
+            // shared_ptr should be passed as value; The reference is invalid in the lambda.
+            [&, s, peer](const boost::system::error_code &ec, std::size_t bytes_transferred) {
+                if (ec) {
+                    delegateDebugPrint("Send handler error: " + ec.message() + "\n");
+                    closeSocket(peer);
+                }
+            });
 }
 
 void IPCBlock::acceptHandler(const boost::system::error_code &error, tcp::socket peer) {
     if (error) {
-        delegateService.post([&]() { DEBUG_PRINTF("Accpet handler error: %\n", error.message().c_str()); });
+        delegateDebugPrint("Accept handler error: " + error.message() + "\n");
         return;
     }
 
     // re-accept
     acceptor->async_accept(
-        ioService,
-        std::bind(&IPCBlock::acceptHandler, this, std::placeholders::_1, std::placeholders::_2)
+            ioService,
+            std::bind(&IPCBlock::acceptHandler, this, std::placeholders::_1, std::placeholders::_2)
     );
 
     // Notify current state
     std::stringstream buf;
-
-    boost::asio::post(delegateService, []() { DEBUG_PRINTF("Connection accepted\n"); });
+    delegateDebugPrint("Connection accepted\n");
 
     NotifyStateChanged(currentState);
     try {
         const std::shared_ptr<tcp::socket> &val = std::make_shared<tcp::socket>(std::move(peer));
         clients.push_back(val);
         attachAsyncReceiver(val);
-
-        boost::asio::post(delegateService, []() { DEBUG_PRINTF("New client connected\n"); });
+        delegateDebugPrint("New client connected\n");
     } catch (std::exception &e) {
         peer.close();
-        boost::asio::post(delegateService, []() { DEBUG_PRINTF("Async send failed, client not added\n"); });
+        delegateDebugPrint("Async send failed, client not added\n");
     }
 }
 
@@ -199,24 +197,24 @@ void IPCBlock::attachAsyncReceiver(const std::shared_ptr<tcp::socket> &peer) {
     std::shared_ptr<char[]> keep(allocatedBuffer, [&](char *p) { socketReceiverPool.ordered_free(p); });
     // Create a new receiving buffer
     peer->async_read_some(
-        buffer(allocatedBuffer, receiverBufferSize),
-        [this, keep, peer](const boost::system::error_code &ec, std::size_t bytes_transferred) {
-          if (ec) {
-              delegateService.post([&]() { DEBUG_PRINTF("Receive handler error: %s\n", ec.message().c_str()); });
-              closeSocket(peer);
-              return;
-          }
-          streamUnpacker.reserve_buffer(bytes_transferred);
-          memcpy(streamUnpacker.buffer(), keep.get(), bytes_transferred);
-          streamUnpacker.buffer_consumed(bytes_transferred);
+            buffer(allocatedBuffer, receiverBufferSize),
+            [this, keep, peer](const boost::system::error_code &ec, std::size_t bytes_transferred) {
+                if (ec) {
+                    delegateDebugPrint("Receive handler error: " + ec.message() + "\n");
+                    closeSocket(peer);
+                    return;
+                }
+                streamUnpacker.reserve_buffer(bytes_transferred);
+                memcpy(streamUnpacker.buffer(), keep.get(), bytes_transferred);
+                streamUnpacker.buffer_consumed(bytes_transferred);
 
-          msgpack::object_handle result;
-          while (streamUnpacker.next(result)) {
-              processIncomingMessage(result, peer);
-          }
+                msgpack::object_handle result;
+                while (streamUnpacker.next(result)) {
+                    processIncomingMessage(result, peer);
+                }
 
-          attachAsyncReceiver(peer);
-        }
+                attachAsyncReceiver(peer);
+            }
     );
 }
 
@@ -234,8 +232,7 @@ void IPCBlock::closeSocket(const std::shared_ptr<tcp::socket> &peer) {
         // Already removed
     } else {
         clients.erase(found);
-        boost::asio::post(delegateService,
-                          []() { DEBUG_PRINTF("Async send failed, remove client\n"); });
+        delegateDebugPrint("Async send failed, remove client\n");
     }
 }
 
@@ -260,43 +257,48 @@ void IPCBlock::processIncomingMessage(msgpack::object_handle &oh, std::shared_pt
         std::vector<msgpack::object> dataVector;
         int messageType = t.as<int>();
         switch (messageType) {
-            case ipc::STATUS:throw RuntimeError("STATUS not supported");
-            case ipc::PARAMS:throw RuntimeError("PARAMS not supported");
+            case ipc::STATUS:
+                throw std::runtime_error("STATUS not supported");
+            case ipc::PARAMS:
+                throw std::runtime_error("PARAMS not supported");
             case ipc::PORTS:
                 // retrieve data object
                 d = map["d"];
                 dataVector = d.as<std::vector<msgpack::object>>();
                 for (msgpack::object &dataObject : dataVector) {
-                    ipc::PortData p = dataObject.as<ipc::PortData>();
+                    ipc::PortData p;
+                    p = dataObject.as<ipc::PortData>();
+
+
                     if (p.id >= outputPorts.size()) {
-                        throw RuntimeError("Port id out of range");
+                        throw std::runtime_error("Port id out of range");
                     }
                     std::shared_ptr<OutputPort> op = outputPorts[p.id];
                     const std::shared_ptr<IPCOutputPort> &localOP = std::dynamic_pointer_cast<IPCOutputPort>(
-                        outputPorts[p.id]);
+                            outputPorts[p.id]);
                     DEBUG_ASSERT(localOP, "Failed to cast IPCOutputPort");
 
                     if (localOP->allowRemote) {
-                        op->portData.reallocate(p.dataRef.size);
-                        memcpy(op->portData.data.get(), p.dataRef.ptr, p.dataRef.size);
+                        op->portData.reallocate(p.dataRef.size());
+                        memcpy(op->portData.data.get(), p.dataRef.c_str(), p.dataRef.size());
                     } else {
-                        throw RuntimeError("Output port " + std::to_string(p.id) + " is not writable");
+                        throw std::runtime_error("Output port " + std::to_string(p.id) + " is not writable");
                     }
                 }
                 break;
-            case ipc::ERR:d = map["d"];
+            case ipc::ERR:
+                d = map["d"];
                 // error is string
-                throw RuntimeError(d.as<std::string>());
-            case ipc::INFO:NotifyBlockInfo();
+                throw std::runtime_error(d.as<std::string>());
+            case ipc::INFO:
+                NotifyBlockInfo();
                 break;
-            default:throw msgpack::type_error();
+            default:
+                throw msgpack::type_error();
         }
 
-    } catch (msgpack::type_error &e) {
-        // packet is invalid
-        throw RuntimeError("Packet type mismatch");
     } catch (std::exception &e) {
-        delegateService.dispatch([&e]() { DEBUG_PRINTF(e.what()); });
+        delegateDebugPrint(e.what());
         std::stringstream ss;
         std::string what = e.what();
         makeOutboundMessage(ipc::ERR, what, ss);

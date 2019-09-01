@@ -38,24 +38,25 @@ public:
     std::vector<SampleTime> sampleTime;
 
     virtual std::shared_ptr<InputPort> registerInputPort(int dataTypeId,
-                                   int numDimension,
-                                   int *dimensions,
-                                   int complexity,
-                                   int acceptFrameData,
-                                   int directFeedthrough);
+                                                         int numDimension,
+                                                         int *dimensions,
+                                                         int complexity,
+                                                         int acceptFrameData,
+                                                         int directFeedthrough);
 
     virtual std::shared_ptr<OutputPort> registerOutputPort(int dataTypeId,
-                                    int numDimension,
-                                    int *dimensions,
-                                    int complexity,
-                                    int acceptFrameData);
+                                                           int numDimension,
+                                                           int *dimensions,
+                                                           int complexity,
+                                                           int acceptFrameData);
 
     virtual std::shared_ptr<InputPort> registerVariableSizedInputPort(int dataTypeId,
-                                                int complexity,
-                                                int acceptFrameData,
-                                                int directFeedthrough);
+                                                                      int complexity,
+                                                                      int acceptFrameData,
+                                                                      int directFeedthrough);
 
-    virtual std::shared_ptr<OutputPort> registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData);
+    virtual std::shared_ptr<OutputPort>
+    registerVariableSizedOutputPort(int dataTypeId, int complexity, int acceptFrameData);
 
     template<typename T>
     void registerBlockParameter(bool tunable) {
@@ -93,7 +94,17 @@ protected:
 protected:
     // override these function when the port type should be override
     virtual std::shared_ptr<InputPort> buildInputPort(std::shared_ptr<InputPort> ref);
+
     virtual std::shared_ptr<OutputPort> buildOutputPort(std::shared_ptr<OutputPort> ref);
+
+protected:
+    // single-threading utilities
+    virtual void stopRequest(const std::string& msg);
+protected:
+    // multi-threading utilities
+    virtual void delegatePrint(const std::string& msg);
+    virtual void delegateDebugPrint(const std::string& msg);
+    virtual void delegateStopRequest(const std::string& msg);
 };
 
 #endif //SIMEX_BLOCK_H
