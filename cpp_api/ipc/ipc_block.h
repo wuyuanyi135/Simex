@@ -13,8 +13,8 @@
 
 #include <thread>
 #include <string>
-#include <cpp_api/socket_resources.h>
 
+#include "socket_resources.h"
 #include "block_state.h"
 #include "block.h"
 #include "msgpack.hpp"
