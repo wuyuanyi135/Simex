@@ -1,14 +1,13 @@
-add_compile_definitions(S_FUNCTION_NAME=SimpleExample)
+project(IPCBlockExample)
+set(FUNCTION_NAME SimpleExample)
+add_compile_definitions(S_FUNCTION_NAME=${FUNCTION_NAME})
 file(GLOB TEST_SOURCES *.cpp *.c)
-add_compile_definitions(DEBUG)
-add_compile_definitions(DEBUG_VERBOSITY_LIFECYCLE)
-add_compile_definitions(DEBUG_SIMULINK_CALLBACK)
 
 set(CMAKE_BUILD_TYPE Debug)
+include_directories(${SIMEX_INCLUDE_DIRS})
 
-include_directories(${SIMEX_INCLUDES})
 matlab_add_mex(
-        NAME SimpleExample
+        NAME ${FUNCTION_NAME}
         SRC ${SIMEX_SOURCES} ${TEST_SOURCES}
-        LINK_TO ${Matlab_MEX_LIBRARY} ${SIMEX_LIBS}
+        LINK_TO ${SIMEX_LIBS}
 )

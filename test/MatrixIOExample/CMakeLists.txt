@@ -1,14 +1,13 @@
-add_compile_definitions(S_FUNCTION_NAME=MatrixIOExample)
+project(IPCBlockExample)
+set(FUNCTION_NAME MatrixIOExample)
+add_compile_definitions(S_FUNCTION_NAME=${FUNCTION_NAME})
 file(GLOB TEST_SOURCES *.cpp *.c)
-add_compile_definitions(DEBUG)
-add_compile_definitions(DEBUG_VERBOSITY_LIFECYCLE)
-add_compile_definitions(DEBUG_SIMULINK_CALLBACK)
 
 set(CMAKE_BUILD_TYPE Debug)
-include_directories(${SIMEX_INCLUDES})
+include_directories(${SIMEX_INCLUDE_DIRS})
 
 matlab_add_mex(
-        NAME MatrixIOExample
+        NAME ${FUNCTION_NAME}
         SRC ${SIMEX_SOURCES} ${TEST_SOURCES}
-        LINK_TO ${Matlab_MEX_LIBRARY} ${SIMEX_LIBS}
+        LINK_TO ${SIMEX_LIBS}
 )
