@@ -1,4 +1,0 @@
-function DynamicMaskDisplayExampleTestMain()
-% TODO
-
-end
