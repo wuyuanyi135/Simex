@@ -31,7 +31,7 @@ do {\
     } \
 } while(0)
 #else
-#define DEBUG_ASSERT(C, MSG)
+#define DEBUG_ASSERT(C, MSG) C;
 #endif
 #endif //SIMEX_DEBUG_UTILS_H
 
