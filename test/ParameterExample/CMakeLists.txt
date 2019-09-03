@@ -1,4 +1,4 @@
-project(IPCBlockExample)
+project(ParameterExample)
 set(FUNCTION_NAME ParameterExample)
 add_compile_definitions(S_FUNCTION_NAME=${FUNCTION_NAME})
 file(GLOB TEST_SOURCES *.cpp *.c)

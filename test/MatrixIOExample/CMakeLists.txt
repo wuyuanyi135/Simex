@@ -1,4 +1,4 @@
-project(IPCBlockExample)
+project(MatrixIOExample)
 set(FUNCTION_NAME MatrixIOExample)
 add_compile_definitions(S_FUNCTION_NAME=${FUNCTION_NAME})
 file(GLOB TEST_SOURCES *.cpp *.c)
