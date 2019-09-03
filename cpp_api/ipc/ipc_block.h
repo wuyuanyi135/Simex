@@ -13,6 +13,7 @@
 
 #include <thread>
 #include <string>
+#include <condition_variable>
 
 #include "socket_resources.h"
 #include "block_state.h"
@@ -47,7 +48,7 @@ protected:
     // server configuration
     bool allowUntethered = true;
     unsigned short port = 9090;
-    int connectionTimeoutSeconds = 10;
+    std::chrono::milliseconds connectionTimeout = std::chrono::seconds(5);
     unsigned long long receiverBufferSize = 10240;
 
 protected:
@@ -67,6 +68,7 @@ protected:
     std::unique_ptr<tcp::acceptor> acceptor; // will be initialized later
     std::vector<std::shared_ptr<SocketResources>> clients;
     std::thread backgroundThread;
+    std::condition_variable initialAcceptanceSemaphore;
 
     msgpack::unpacker streamUnpacker{};
 

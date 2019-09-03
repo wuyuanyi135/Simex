@@ -28,26 +28,35 @@ void IPCBlock::onStart() {
             std::bind(&IPCBlock::acceptHandler, this, std::placeholders::_1, std::placeholders::_2)
     );
     backgroundThread = std::thread([&] { ioService.run(); });
-    DEBUG_PRINTF("Listening on :%d\n", port);
+    ssPrintf("Listening on :%d\n", port);
 
-// Notify started
+    if (!allowUntethered) {
+        std::mutex waitClientMutex;
+        std::unique_lock<std::mutex> lck(waitClientMutex);
+        auto waitResult = initialAcceptanceSemaphore.wait_for(lck, connectionTimeout);
+        if (waitResult == std::cv_status::timeout) {
+            stopRequest("Time out when wait for client connection");
+        }
+    }
+
+    // Notify started
     NotifyStateChanged(STARTED);
 
 }
 
 void IPCBlock::onTerminate() {
-    NotifyStateChanged(STOPPED);
-
-    if (acceptor->is_open()) {
+    if (acceptor && acceptor->is_open()) {
+        NotifyStateChanged(STOPPED);
         // if closing io service, the outstanding task will not be executed and resource will be leaked.
         for (auto &client: clients) {
             closeSocket(client);
         }
         acceptor->close();
     }
-
-    backgroundThread.join();
-
+    if(backgroundThread.joinable()) {
+        backgroundThread.join();
+    }
+    Block::onTerminate();
 }
 
 void IPCBlock::onUpdate() {
@@ -186,6 +195,10 @@ void IPCBlock::acceptHandler(const boost::system::error_code &error, tcp::socket
         clients.push_back(sr);
         attachAsyncReceiver(sr);
         delegateDebugPrint("New client connected\n");
+
+        // allow the tethered instance continue when client is availble.
+        initialAcceptanceSemaphore.notify_one();
+
     } catch (std::exception &e) {
         peer.close();
         delegateDebugPrint("Async send failed, client not added\n");
@@ -230,6 +243,10 @@ void IPCBlock::closeSocket(std::shared_ptr<SocketResources> sr) {
     } else {
         clients.erase(found);
         delegateDebugPrint("Async send failed, remove client\n");
+
+        if (!allowUntethered && clients.size() == 0) {
+            delegateStopRequest("The last client disconnects.");
+        }
     }
 }
 
