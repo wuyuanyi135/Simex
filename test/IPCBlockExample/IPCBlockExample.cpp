@@ -2,8 +2,8 @@
 // Created by wuyuanyi on 2019-08-19.
 //
 
-#include <cpp_api/ipc/ipc_block.h>
-#include <cpp_api/ipc/ipc_port.h>
+#include "ipc/ipc_block.h"
+#include "ipc/ipc_port.h"
 
 class IPCBlockExample : public IPCBlock {
 public:
@@ -26,7 +26,7 @@ protected:
     void configureConnection() override {
         allowUntethered = true;
         port = 9990;
-        connectionTimeoutSeconds = 2;
+        connectionTimeout = std::chrono::seconds(2);
     }
 };
 
