@@ -19,6 +19,24 @@ int _initializeMeta(SimStruct *S) {
     // Will overwrite any previous block meta data (data for initialization the size).
     pm->block = createBlock(S);
     auto &blk = pm->block;
+
+    // Number of parameters
+    DEBUG_PRINTF("Dialog parameters: %d\n", blk->dialogParameters.size());
+    ssSetNumSFcnParams(S, static_cast<int_T>(blk->dialogParameters.size()));
+    if (ssGetNumSFcnParams(S) == ssGetSFcnParamsCount(S)) {
+        mdlCheckParameters(S);
+        if (ssGetErrorStatus(S) != NULL) {
+            throw std::invalid_argument(ssGetErrorStatus(S));
+        }
+    } else {
+        return -1; /* Parameter mismatch reported by the Simulink engine*/
+    }
+    blk->onInitialParameterProcessed();
+
+    for (int i = 0; i < blk->dialogParameters.size(); i++) {
+        ssSetSFcnParamTunable(S, i, blk->dialogParameters[i]->tunable ? SS_PRM_TUNABLE : SS_PRM_NOT_TUNABLE);
+    }
+
     if (blk->allowSignalsWithMoreThan2D) {
         ssAllowSignalsWithMoreThan2D(S);
     }
@@ -99,21 +117,6 @@ int _initializeMeta(SimStruct *S) {
 
     }
 
-    // Number of parameters
-    DEBUG_PRINTF("Dialog parameters: %d\n", blk->dialogParameters.size());
-    ssSetNumSFcnParams(S, static_cast<int_T>(blk->dialogParameters.size()));
-    if (ssGetNumSFcnParams(S) == ssGetSFcnParamsCount(S)) {
-        mdlCheckParameters(S);
-        if (ssGetErrorStatus(S) != NULL) {
-            throw std::invalid_argument(ssGetErrorStatus(S));
-        }
-    } else {
-        return -1; /* Parameter mismatch reported by the Simulink engine*/
-    }
-
-    for (int i = 0; i < blk->dialogParameters.size(); i++) {
-        ssSetSFcnParamTunable(S, i, blk->dialogParameters[i]->tunable ? SS_PRM_TUNABLE : SS_PRM_NOT_TUNABLE);
-    }
     // Number of states
     ssSetNumContStates(S, blk->numContinuousStates);
     ssSetNumDiscStates(S, blk->numDiscreteStates);

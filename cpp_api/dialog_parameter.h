@@ -24,6 +24,27 @@ template<typename T>
 class DialogParameter {};
 
 template<>
+class DialogParameter<int32_T> : public DialogParameterBase {
+public:
+    DialogParameter(int id, bool tunable): DialogParameterBase(id, tunable) {};
+    bool onValidateParameter() override {
+        return data > min && data < max;
+    }
+    void onUpdateParameter(const mxArray *newArg) override {
+        if (!mxIsNumeric(newArg)) throw std::invalid_argument("Dialog Parameter " + std::to_string(id) + " is not numeric");
+        this->data = static_cast<int32_T>(mxGetScalar(newArg));
+    }
+public:
+    int32_T data{0};
+    int32_T min{std::numeric_limits<int32_T>::min()};
+    int32_T max{std::numeric_limits<int32_T>::max()};
+    std::string toString() override {
+        return std::to_string(data);
+    }
+};
+
+
+template<>
 class DialogParameter<real64_T> : public DialogParameterBase {
  public:
   DialogParameter(int id, bool tunable): DialogParameterBase(id, tunable) {};

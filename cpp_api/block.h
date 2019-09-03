@@ -68,6 +68,11 @@ public:
     virtual ~Block();
 
 public:
+    virtual void onInitialParameterProcessed() {
+        // this callback is invoked when the first dialog parameters been processed.
+        // If the block configuration depends on the parameter, initialize them here.
+    }
+
     virtual void onStart() {
         isStarted = true;
     };
