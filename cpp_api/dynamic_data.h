@@ -37,16 +37,23 @@ private:
 
 public:
 
-    int getSize() {
+    int getSize() const {
         return size;
     }
 
     void copyTo(void *dest, int sz = -1) {
         std::lock_guard<std::mutex> lock(mutex);
+        DEBUG_ASSERT(dest, "copyTo dest == NULL");
         if (sz < 0) {
             sz = size;
         }
         memcpy(dest, data.get(), sz);
+    }
+
+    void copyFrom(DynamicData &ref) {
+        int sz = ref.getSize();
+        reallocate(sz);
+        ref.copyTo(data.get(), sz);
     }
 
     void copyFrom(const void *src, int sz = -1) {
@@ -82,6 +89,19 @@ public:
         copyFrom(&target, sizeof(target));
     }
 
+    template<typename RetType>
+    std::unique_ptr<std::vector<RetType *>> getDataView() {
+        auto p = std::unique_ptr<std::vector<RetType *>>(new std::vector<RetType *>());
+        if (size % sizeof(RetType) != 0) {
+            throw std::runtime_error("size is not divisible by RetType");
+        }
+        for (int i = 0; i < size / sizeof(RetType); i++) {
+            void* ptr = data.get() + sizeof(RetType)*i;
+            p->emplace_back(static_cast<RetType*>(ptr));
+        }
+        return p;
+    };
+
     char *operator+(int offset) {
         return (static_cast<char *>(data.get()) + offset);
     }
@@ -89,6 +109,8 @@ public:
     char &operator[](int index) {
         return *operator+(index);
     }
+
+
 };
 
 #endif //SIMEX_DYNAMIC_DATA_H
