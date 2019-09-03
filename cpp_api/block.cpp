@@ -1,8 +1,8 @@
 //
 // Created by wuyua on 2019-07-09.
 //
-#include <simulink_impl/debug_utils.h>
-#include <simulink_impl/datatype_size.h>
+#include "debug_utils.h"
+#include "datatype_size.h"
 
 #include <utility>
 #include "block.h"

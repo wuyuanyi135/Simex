@@ -110,7 +110,9 @@ public:
         return *operator+(index);
     }
 
-
+    char * getRawDataPointer() const {
+        return data.get();
+    }
 };
 
 #endif //SIMEX_DYNAMIC_DATA_H

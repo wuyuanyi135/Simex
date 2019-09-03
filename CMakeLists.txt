@@ -10,10 +10,10 @@ if (DEBUG)
 endif ()
 if (DEBUG_VERBOSITY_LIFECYCLE)
     add_compile_definitions(DEBUG_VERBOSITY_LIFECYCLE)
-endif()
+endif ()
 if (DEBUG_SIMULINK_CALLBACK)
     add_compile_definitions(DEBUG_SIMULINK_CALLBACK)
-endif()
+endif ()
 
 # Find dependencies
 find_package(Matlab REQUIRED)
@@ -38,8 +38,17 @@ if (WIN32)
     add_compile_definitions(_WIN32_WINNT=0x0601)
 endif ()
 
-file(GLOB SIMULINK_IMPL_SOURCES simulink_impl/*.c simulink_impl/*.cpp)
-file(GLOB CPP_API_SOURCES cpp_api/*.c cpp_api/*.cpp cpp_api/ipc/*.cpp)
+file(
+        GLOB SIMULINK_IMPL_SOURCES
+        ${CMAKE_CURRENT_LIST_DIR}/simulink_impl/*.c
+        ${CMAKE_CURRENT_LIST_DIR}/simulink_impl/*.cpp
+)
+file(
+        GLOB CPP_API_SOURCES
+        ${CMAKE_CURRENT_LIST_DIR}/cpp_api/*.c
+        ${CMAKE_CURRENT_LIST_DIR}/cpp_api/*.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/cpp_api/ipc/*.cpp
+)
 
 set(
         SIMEX_INCLUDE_DIRS
