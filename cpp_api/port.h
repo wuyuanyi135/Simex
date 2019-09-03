@@ -6,7 +6,7 @@
 #define SIMEX_PORT_H
 
 #include <vector>
-#include <simulink_impl/debug_utils.h>
+#include "debug_utils.h"
 #include "simulink_headers.h"
 
 #include "sample_time.h"
