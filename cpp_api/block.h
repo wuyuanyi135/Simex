@@ -33,7 +33,7 @@ public:
     int numPWorks{0};
     int numModes{0};
     int numNonsampledZeroCrossings{0};
-    int options{0};
+    unsigned int options{0};
     bool allowSignalsWithMoreThan2D{false};
     std::vector<SampleTime> sampleTime;
 
@@ -68,14 +68,16 @@ public:
     virtual ~Block();
 
 public:
-    // Called before on start. Create memory for the port, etc.
-    virtual void onInitializeRuntime();
+    virtual void onStart() {
+        isStarted = true;
+    };
 
-    virtual void onStart() { isStarted = true; };
-
+    // Do not assume any stage has been executed properly.
     virtual void onTerminate() {
         isStarted = false;
-        delegateService.stop();
+        if (!delegateService.stopped()) {
+            delegateService.stop();
+        }
     };
 
     virtual void onUpdate() {
@@ -102,7 +104,7 @@ public:
 
 protected:
     // single-threading utilities
-    virtual void stopRequest(const std::string &msg);
+    virtual void stopRequest(std::string msg);
 
 protected:
     // multi-threading utilities

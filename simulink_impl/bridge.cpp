@@ -146,16 +146,19 @@ int _initializeSampleTime(SimStruct *S) {
 int _start(SimStruct *S) {
     auto pm = BlockPersistenceRegistry::getRegistry(S);
     DEBUG_ASSERT(pm->block, "block meta not exist when start");
-    pm->block->onInitializeRuntime();
-    pm->block->isStarted = true;
     pm->block->onStart();
+    pm->block->isStarted = true;
     return 0;
 }
 
 int _terminate(SimStruct *S) {
+
     auto pm = BlockPersistenceRegistry::getRegistry(S);
     DEBUG_ASSERT(pm->block,
                  "The block is not created when terminating! The resources may not be released. Please clear all to reload the module");
+
+    // Even though isStarted is not set, a part of onStart code may have been run;
+    // It is dev's responsibility to release **ONLY** the valid resources in terminate.
     try {
         pm->block->onTerminate();
     } catch (std::exception &) {

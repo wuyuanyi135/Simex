@@ -3,11 +3,14 @@
 //
 #include <simulink_impl/debug_utils.h>
 #include <simulink_impl/datatype_size.h>
+
+#include <utility>
 #include "block.h"
 #include "dimension_to_width.h"
 
 Block::Block(SimStruct &S) : simStructReference(&S) {
-
+    // This guarantee the onTerminate being executed even when exception occurs in onStart
+    options |= (unsigned int)SS_OPTION_CALL_TERMINATE_ON_EXIT;
 }
 
 Block::~Block() {
@@ -87,10 +90,6 @@ Block::registerVariableSizedOutputPort(int dataTypeId, int complexity, int accep
     return transformed;
 }
 
-void Block::onInitializeRuntime() {
-
-}
-
 std::shared_ptr<OutputPort> Block::buildOutputPort(std::shared_ptr<OutputPort> ref) {
     return ref;
 }
@@ -99,8 +98,9 @@ std::shared_ptr<InputPort> Block::buildInputPort(std::shared_ptr<InputPort> ref)
     return ref;
 }
 
-void Block::stopRequest(const std::string &msg) {
-    ssSetErrorStatus(simStructReference, msg.c_str());
+void Block::stopRequest(std::string msg) {
+    static std::string msgCopy = std::move(msg);
+    ssSetErrorStatus(simStructReference, msgCopy.c_str());
     ssSetStopRequested(simStructReference, 1);
 }
 
