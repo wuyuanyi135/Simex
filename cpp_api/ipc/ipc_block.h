@@ -55,13 +55,14 @@ protected:
     // notify the clients about state or data change
     BlockState currentState = STOPPED;
 
-    void NotifyStateChanged(BlockState state);
+    virtual void NotifyStateChanged(BlockState state);
 
-    void NotifyParameterChanged();
+    virtual void NotifyParameterChanged();
 
-    void NotifyInputPortUpdated();
+    virtual void NotifyInputPortUpdated();
 
-    void NotifyBlockInfo();
+    virtual void NotifyBlockInfo();
+
 protected:
     // networking members
     io_service ioService;
@@ -76,8 +77,9 @@ protected:
     // callback handler for new connection
     void acceptHandler(const boost::system::error_code &error, tcp::socket peer);
 
-    void broadcastMessage(const std::string& str);
-    void sendMessage(const std::string& str, std::shared_ptr<SocketResources> sr);
+    void broadcastMessage(const std::string &str);
+
+    void sendMessage(const std::string &str, std::shared_ptr<SocketResources> sr);
 
     void attachAsyncReceiver(std::shared_ptr<SocketResources> sr);
 
@@ -85,9 +87,19 @@ protected:
     void closeSocket(std::shared_ptr<SocketResources> sr);
 
 protected:
-    template <typename T, typename Stream>
-    void makeOutboundMessage(ipc::MessageType type, T& payload, Stream& s);
-    void processIncomingMessage(msgpack::object_handle& oh, std::shared_ptr<SocketResources> sr);
+    template<typename T, typename Stream>
+    void makeOutboundMessage(ipc::MessageType type, T &payload, Stream &s) {
+        msgpack::packer<std::stringstream> packer(s);
+        packer.pack_map(2);
+        packer.pack("t");
+        // type cast otherwise template compilation failed.
+        packer.pack(static_cast<int>(type));
+
+        packer.pack("d");
+        packer.pack(payload);
+    }
+
+    void processIncomingMessage(msgpack::object_handle &oh, std::shared_ptr<SocketResources> sr);
 
     std::shared_ptr<InputPort> buildInputPort(std::shared_ptr<InputPort> ref) override;
 

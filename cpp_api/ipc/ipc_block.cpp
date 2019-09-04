@@ -250,18 +250,6 @@ void IPCBlock::closeSocket(std::shared_ptr<SocketResources> sr) {
     }
 }
 
-template<typename T, typename Stream>
-void IPCBlock::makeOutboundMessage(ipc::MessageType type, T &payload, Stream &s) {
-    msgpack::packer<std::stringstream> packer(s);
-    packer.pack_map(2);
-    packer.pack("t");
-    // type cast otherwise template compilation failed.
-    packer.pack(static_cast<int>(type));
-
-    packer.pack("d");
-    packer.pack(payload);
-}
-
 void IPCBlock::processIncomingMessage(msgpack::object_handle &oh, std::shared_ptr<SocketResources> sr) {
     const msgpack::object &object = oh.get();
     try {
