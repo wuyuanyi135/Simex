@@ -83,4 +83,20 @@ class DialogParameter<std::string> : public DialogParameterBase {
   std::string data{};
 };
 
+template<>
+class DialogParameter<bool> : public DialogParameterBase {
+ public:
+  DialogParameter(int id, bool tunable): DialogParameterBase(id, tunable) {};
+  void onUpdateParameter(const mxArray *newArg) override {
+      if (!mxIsLogical(newArg)) throw std::invalid_argument("Dialog Parameter " + std::to_string(id) + " is not boolean");
+      data = mxGetLogicals(newArg)[0];
+  }
+  std::string toString() override {
+      return std::to_string(data);
+  }
+
+ public:
+  bool data{};
+};
+
 #endif //SIMEX_DIALOG_PARAMETER_H

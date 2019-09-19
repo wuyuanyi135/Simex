@@ -113,6 +113,8 @@ void IPCBlock::NotifyInputPortUpdated() {
             ipc::PortData data;
             data.id = localInputPort->portId;
             data.dataRef = localInputPort->portData.toString();
+            data.typeId = localInputPort->dataTypeId;
+            data.dims = localInputPort->dimension;
             msg.emplace_back(data);
         }
     }

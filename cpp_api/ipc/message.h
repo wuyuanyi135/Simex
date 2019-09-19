@@ -19,7 +19,9 @@ namespace ipc {
     struct PortData {
         std::string dataRef;
         int id;
-        MSGPACK_DEFINE_MAP(id, dataRef);
+        std::vector<int> dims;
+        int typeId;
+        MSGPACK_DEFINE_MAP(id, dataRef, dims, typeId);
     };
 
     struct PortInfo {
